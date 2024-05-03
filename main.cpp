@@ -19,6 +19,9 @@ const int leftMotorPort = 1;  //port number for the left motor
 const int rightMotorPort = 2; //port number for the right motor
 const int cameraMotorPort = 3;//port number for the camera motor
 
+
+char[] server_addr = {} // server adress
+
 //used to store instructions to drive each motor
 struct motorInstructions{
     int  minValue;
@@ -74,17 +77,47 @@ void motorDrive(motorInstructions instructions){
 
 
 //------- Dynamic Functions ---------
+void openGate(){
+    //attempts to connect to gate, will loop untill connected
+    int connected = 0;
+    while(connected == 0){
+        connected = connect_to_server( char server_addr[15],int port);
+        cout << "error connectiong to gate, code:" << connected << endl;
+    }
+
+    //sends request to server
+    char[] pleaseMessage = {'P','l','e','a','s','e'};
+    send_to_server(pleaseMessage);
+
+    //reccives password from server
+    char[] password = new char[];
+    receive_from_server(password&);
+    cout << "password:" << password << endl;
+
+    //sends password to server
+    send_to_server(password);
+}
+
+void followLine(){
+    take_picture();
+
+    
 
 
+    update_screen();
+}
+void intersections(){
+    
+}
+void pushPole(){
+    
+}
 
 
 //------- Main ---------
 int main() {
-    take_picture();
-
-
-
-
-    update_screen();
+    openGate()
+    cout << "open gate passed" << endl;
+    
     return 0;
 }
