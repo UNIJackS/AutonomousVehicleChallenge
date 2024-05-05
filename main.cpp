@@ -5,6 +5,7 @@
 
 //------- Imports -------
 #include <iostream> // input-output library 
+#include <math.h> //used for rounding function
 #include "E101.h" // VUW camera library
 
 using namespace::std;
@@ -15,32 +16,30 @@ using namespace::std;
 const int totalXPixels = 320;
 const int totalYPixesl = 240;
 
+//Motor Varables
 const int leftMotorPort = 1;  //port number for the left motor
-const int rightMotorPort = 2; //port number for the right motor
-const int cameraMotorPort = 3;//port number for the camera motor
+const bool leftMotorReversed = false; // is the left motor fliped
 
+const int rightMotorPort = 2; //port number for the right motor
+const bool rightMotorReversed = true; // is the right motor fliped
+
+const int cameraMotorPort = 3;//port number for the camera motor
+const bool cameraMotorReversed = false; // is the camera motor fliped
+
+//Black detection Varables
 const float blackTolarance = 10; // The value by which red green and blue can differ and still be black
 const int maxIntensity  = 20; // The maximum value of red + green + blue values to still be black
 
-
-//Sets the edges of the box to check
 const int leftOfBox = 50; //px
 const int rightOfBox = 100; //px
 const int topOfBox = 50; //px
 const int bottomOfBox = 100; //px
 
 
-
-char[] serverAddress = {} // server adress
+char[] serverAddress = {'1','3','0','.','1','9','5','.','3','.','5','4'} // server address
+int serverPort = 1024; //server port
 
 //used to store instructions to drive each motor
-struct motorInstructions{
-    int  minValue;
-    int  maxValue;
-    int  currentValue;
-    int  port;
-    bool isContinus; //true if this is a continus motor; flase if it is not
-};
 
 struct rowInfo{
     int firstIndex;
@@ -107,23 +106,55 @@ void drawBox(int left,int right,int top,int bottom) {
 	}
 }
 
-//takes a motor drive struct 
+//maximum vlaue is the maximum value for the input range
+//minimum value is the minimum value for the input range
+//current vlaue is the value inisde the range to be written to the motors
+//revers is weather to reverse the motor
+//port is the port to be written to 
 //returns nothing
-void motorDrive(motorInstructions instructions){
-    if(motorInstructions.maxValue > motorInstructions.minValue){
-        int range  = motorInstructions.maxValue - motorInstructions.minValue;
-        int value = motorInstructions.currentValue - motorInstructions.minValue;
+void motorDrive(int maxValue, int minValue, int currentValue, bool reverse, int port) {
+    //-------------------------------------- Input Checking -------------------------------------- 
+    //checks to make sure current value is not negative as this will mess up maths
+    if (currentValue <= 0) {
+        cout << "motorDrive:value is negative" << endl;
+        cout << "motorDrive:value :" << currentValue << endl;
+        return;
+    };
+    //checks to make sure min value is not negative as this will mess up maths
+    if (minValue < 0) {
+        cout << "motorDrive:min is negatibe" << endl;
+        cout << "motorDrive:min:" << minValue << endl;
+        return;
+    };
+    //checsk to make sure the min is lower than the max
+    if (maxValue < minValue) {
+        cout << "motorDrive:min must be greater than 0" << endl;
+        cout << "motorDrive:Current value of min:" << minValue << endl;
+        return;
+    };
+            
+    //-------------------------------------- Actual function -------------------------------------- 
 
+    //casted to doubles because other wise interger divisoion is truncated
+    //rounding used here so that 2.6 doesnt go to 2 but 3 so motors are more accurite
+    int pwm = round(currentValue / ((double)(maxValue - minValue) / (double)(30)) + 30);
+    cout << "pwm" << pwm << endl;
 
-        set_motors(motorInstructions.port,pwm);
-
-
-    }else{
-        cout << "min is greater than max in motor drive call" << endl;
-    }
-    
-
-    
+    //checks to make sure pwm is greater than 30 and less than 60 to not fry motors
+    if (pwm < 30 && pwm > 60) {
+        cout << "motorDrive:pwm out of range (30 to 60)" << endl;
+        cout << "motorDrive:Current value of pwm:" << pwm << endl;
+        return;
+    }else {
+        //fips pwm for reverse
+        if (reverse) {
+            pwm = 60 - (pwm - 30);
+            set_motors(port,pwm);
+        }
+        else {
+            set_motors(port,pwm);
+        }
+    } 
 }
 
 
@@ -137,7 +168,7 @@ void openGate(){
     //attempts to connect to gate, will loop untill connected
     int connected = 0;
     while(connected == 0){
-        connected = connect_to_server( char serverAddress[15],int port);
+        connected = connect_to_server(serverAddress,serverPort);
         cout << "error connectiong to gate, code:" << connected << endl;
     }
 
@@ -169,14 +200,16 @@ void followLine(){
     set_pixel(topOfBox, topRow.rowList.[topRow.averageIndex], 255, 0, 0);
     //sets the bottom average pixel to red
     set_pixel(bottomOfBox, bottomRow.rowList.[bottomRow.averageIndex], 255, 0, 0);
+
+    //sets the left motor speed 
+    motorDrive(320,0,gradent,false,leftMotorPort);
+    //sets the right motor speed
+    motorDrive(320,0,gradent,true,rightMotorPort);
     
-    set_pixel(top, left + currentCol, 255, 0, 0);
-
-
-    
-
-
     update_screen();
+
+    //drives the motors
+    hardware_exchange();
 }
 void intersections(){
     
@@ -190,6 +223,14 @@ void pushPole(){
 int main() {
     openGate()
     cout << "open gate passed" << endl;
+
+
+    while(true){
+        followLine();
+        sleep1(20);
+    }
+    cout << "follow line passed" << endl;
+
     
     return 0;
 }
