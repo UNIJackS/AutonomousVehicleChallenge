@@ -82,8 +82,8 @@ rowInfo blackRowRead(int rowToRead){
             output.firstIndex = currentXPixel;
             firstBlackPixel = false;
         }
-        output.rowList[currentXPixel] = isblack(currentXPixel,rowToRead)
         output.lastIndex = currentXPixel;
+        output.rowList[currentXPixel] = isblack(currentXPixel,rowToRead)
     }
 
     output.averageIndex = (output.lastIndex-output.firstIndex)/2;
@@ -158,10 +158,19 @@ void followLine(){
     take_picture();
 
     drawBox(leftOfBox,rightOfBox,topOfBox,bottomOfBox);
-    int topRowAverage = blackRowRead(topOfBox);
-    int bottomRowAverage = blackRowRead(bottomOfBox);
+    rowInfo topRow = blackRowRead(topOfBox);
+    rowInfo bottomRow = blackRowRead(bottomOfBox);
 
+    int deltaX = topRow.rowList.[topRow.averageIndex]-bottomRow.rowList.[bottomRow.averageIndex]; // change in x of the averages
+    int deltaY = bottomOfBox - topOfBox; //change in y (diffrance between top and bottom of box)
+    double gradent = deltaY / deltaX; // the diffrance between the middle of the top and bottom
 
+    //sets the top average pixel to red
+    set_pixel(topOfBox, topRow.rowList.[topRow.averageIndex], 255, 0, 0);
+    //sets the bottom average pixel to red
+    set_pixel(bottomOfBox, bottomRow.rowList.[bottomRow.averageIndex], 255, 0, 0);
+    
+    set_pixel(top, left + currentCol, 255, 0, 0);
 
 
     
