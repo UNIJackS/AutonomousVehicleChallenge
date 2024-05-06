@@ -30,10 +30,10 @@ const bool cameraMotorReversed = false; // is the camera motor fliped
 const float blackTolarance = 10; // The value by which red green and blue can differ and still be black
 const int maxIntensity  = 100; // The maximum value of red + green + blue values to still be black
 
-const int leftOfBox = 50; //px
-const int rightOfBox = 100; //px
-const int topOfBox = 50; //px
-const int bottomOfBox = 100; //px
+const int leftOfBox = 110; //px
+const int rightOfBox = 210; //px
+const int topOfBox = 82; //px
+const int bottomOfBox = 158; //px
 
 
 char serverAddress[15] = {'1','3','0','.','1','9','5','.','3','.','5','3'}; // server address
@@ -42,10 +42,10 @@ int serverPort = 1024; //server port
 //used to store instructions to drive each motor
 
 struct rowInfo{
-    int firstIndex;
-    int lastIndex;
-    int averageIndex;
-    bool rowList[totalXPixels];
+    int firstBlackPixelX;
+    int lastBlackPixelX;
+    int averageX;
+    bool rowList[rightOfBox-leftOfBox];
 };
 
 //------------------------- Static Functions ---------------------------
@@ -77,18 +77,18 @@ rowInfo blackRowRead(int rowToRead){
     //creates a rowInfo object to store all the info
     rowInfo output;
     bool firstBlackPixel = true;
-    for(int currentXPixel =leftOfBox; currentXPixel< (rightOfBox -leftOfBox); currentXPixel+=1){
+    for(int currentXPixel =leftOfBox; currentXPixel< rightOfBox; currentXPixel+=1){
         if(firstBlackPixel){
-            output.firstIndex = currentXPixel;
+            output.firstBlackPixelX = currentXPixel;
             firstBlackPixel = false;
         }
-        output.lastIndex = currentXPixel;
+        output.lastBlackPixelX = currentXPixel;
         output.rowList[currentXPixel] = isblack(currentXPixel,rowToRead);
     }
     
-    cout << "calculated average:" << (output.lastIndex-output.firstIndex)/2 << endl;
+    cout << "calculated average:" << (output.lastBlackPixelX-output.firstBlackPixelX)/2 << endl;
 
-    output.averageIndex = (output.lastIndex-output.firstIndex)/2;
+    output.averageX = ((output.lastBlackPixelX-output.firstBlackPixelX)/2) + output.firstBlackPixelX;
 
     return output;
 }
@@ -191,14 +191,17 @@ void openGate(){
 void followLine(){
     take_picture();
 
-    drawBox(leftOfBox,rightOfBox,topOfBox,bottomOfBox);
+    int firstBlackPixelX;
+    int lastBlackPixelX;
+    int averageX;
+    bool rowList[rightOfBox-leftOfBox];
+    
     
     rowInfo topRow = blackRowRead(topOfBox);
     rowInfo bottomRow = blackRowRead(bottomOfBox);
 
-    int deltaX = topRow.rowList[topRow.averageIndex]-bottomRow.rowList[bottomRow.averageIndex]; // change in x of the averages
+    int deltaX = topRow.rowList[topRow.averageX]-bottomRow.rowList[bottomRow.averageX]; // change in x of the averages
     int deltaY = bottomOfBox - topOfBox; //change in y (diffrance between top and bottom of box)
-
 
     double gradent;
     if(deltaX != 0){
@@ -207,18 +210,21 @@ void followLine(){
 	}else{
 		gradent = 0;
     }
+    //draws the box of where it is checking
+    drawBox(leftOfBox,rightOfBox,topOfBox,bottomOfBox);
+
     //sets the top average pixel to red
-    cout << "topRow.rowList[topRow.averageIndex]" << topRow.rowList[topRow.averageIndex] <<endl;
-    set_pixel(topOfBox, topRow.rowList[topRow.averageIndex], 255, 0, 0);
+    set_pixel(topOfBox, topRow.averageX, 255, 0, 0);
+    
     //sets the bottom average pixel to red
-    set_pixel(bottomOfBox, bottomRow.rowList[bottomRow.averageIndex], 255, 0, 0);
-    cout << "bottomRow.rowList[bottomRow.averageIndex]" << bottomRow.rowList[bottomRow.averageIndex] <<endl;
+    set_pixel(bottomOfBox, bottomRow.averageX, 255, 0, 0);
 
     //sets the left motor speed 
     motorDrive(320,0,gradent,false,leftMotorPort);
     //sets the right motor speed
     motorDrive(320,0,gradent,true,rightMotorPort);
-    cout << "motor drives passed" << endl;
+
+    //updates the screen
     update_screen();
 
     //drives the motors
