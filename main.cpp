@@ -28,7 +28,7 @@ const bool cameraMotorReversed = false; // is the camera motor fliped
 
 //Black detection Varables
 const float blackTolarance = 10; // The value by which red green and blue can differ and still be black
-const int maxIntensity  = 20; // The maximum value of red + green + blue values to still be black
+const int maxIntensity  = 100; // The maximum value of red + green + blue values to still be black
 
 const int leftOfBox = 50; //px
 const int rightOfBox = 100; //px
@@ -36,7 +36,7 @@ const int topOfBox = 50; //px
 const int bottomOfBox = 100; //px
 
 
-char[] serverAddress = {'1','3','0','.','1','9','5','.','3','.','5','4'} // server address
+char serverAddress[15] = {'1','3','0','.','1','9','5','.','3','.','5','3'}; // server address
 int serverPort = 1024; //server port
 
 //used to store instructions to drive each motor
@@ -45,26 +45,27 @@ struct rowInfo{
     int firstIndex;
     int lastIndex;
     int averageIndex;
-    bool[totalXPixels] rowList;
+    bool rowList[totalXPixels];
 };
 
 //------------------------- Static Functions ---------------------------
 bool isblack(int x,int y){
-    int red = get_pixel(rowToRead,currentYPixel,0)
-    int green = get_pixel(rowToRead,currentYPixel,1)
-    int blue = get_pixel(rowToRead,currentYPixel,2)
-    int intensity = get_pixel(rowToRead,currentYPixel,3)
+    int red = get_pixel(y,x,0);
+    int green = get_pixel(y,x,1);
+    int blue = get_pixel(y,x,2);
+    int intensity = get_pixel(y,x,3);
 
     //checsk if the red green and blue values are within + or - blackTolarance of each other 
     //and intesity is less than the maximum intesity
-    if((red - blackTolarance > green || red + blackTolarance < green) 
-        && (red - blackTolarance > blue || red + blackTolarance < blue) 
-        && (green - blackTolarance > blue || green + blackTolarance < blue)
-        && intensity < maxIntensity ){
-        return false;
+    if((red - blackTolarance < green || red + blackTolarance > green) 
+       && (red - blackTolarance < blue || red + blackTolarance > blue) 
+       && (green - blackTolarance < blue || green + blackTolarance > blue)
+        && intensity > maxIntensity ){
+       return false;
+   
     }else{
         //sets pixels detected as black to green
-        set_pixel(x, y, 0, 255, 0);
+        set_pixel(y, x, 0, 255, 0);
         return true;
     }
 }
@@ -74,16 +75,18 @@ bool isblack(int x,int y){
 //returns a rowInfo struct
 rowInfo blackRowRead(int rowToRead){
     //creates a rowInfo object to store all the info
-    rowInfo output = new rowInfo;
+    rowInfo output;
     bool firstBlackPixel = true;
-    for(int currentXPixel =0; currentXPixel<=totalXPixels; currentXPixel+=1){
+    for(int currentXPixel =leftOfBox; currentXPixel< (rightOfBox -leftOfBox); currentXPixel+=1){
         if(firstBlackPixel){
             output.firstIndex = currentXPixel;
             firstBlackPixel = false;
         }
         output.lastIndex = currentXPixel;
-        output.rowList[currentXPixel] = isblack(currentXPixel,rowToRead)
+        output.rowList[currentXPixel] = isblack(currentXPixel,rowToRead);
     }
+    
+    cout << "calculated average:" << (output.lastIndex-output.firstIndex)/2 << endl;
 
     output.averageIndex = (output.lastIndex-output.firstIndex)/2;
 
@@ -122,7 +125,7 @@ void motorDrive(int maxValue, int minValue, int currentValue, bool reverse, int 
     };
     //checks to make sure min value is not negative as this will mess up maths
     if (minValue < 0) {
-        cout << "motorDrive:min is negatibe" << endl;
+        cout << "motorDrive:min is negative" << endl;
         cout << "motorDrive:min:" << minValue << endl;
         return;
     };
@@ -167,18 +170,18 @@ void motorDrive(int maxValue, int minValue, int currentValue, bool reverse, int 
 void openGate(){
     //attempts to connect to gate, will loop untill connected
     int connected = 0;
-    while(connected == 0){
-        connected = connect_to_server(serverAddress,serverPort);
-        cout << "error connectiong to gate, code:" << connected << endl;
-    }
+    //while(connected == 0){
+	connected = connect_to_server(serverAddress,serverPort);
+    cout << "error connectiong to gate, code:" << connected << endl;
+    //}
 
     //sends request to server
-    char[] pleaseMessage = {'P','l','e','a','s','e'};
+    char pleaseMessage[] = {'P','l','e','a','s','e'};
     send_to_server(pleaseMessage);
 
     //reccives password from server
-    char[] password = new char[];
-    receive_from_server(password&);
+    char password[24];
+    receive_from_server(password);
     cout << "password:" << password << endl;
 
     //sends password to server
@@ -189,23 +192,33 @@ void followLine(){
     take_picture();
 
     drawBox(leftOfBox,rightOfBox,topOfBox,bottomOfBox);
+    
     rowInfo topRow = blackRowRead(topOfBox);
     rowInfo bottomRow = blackRowRead(bottomOfBox);
 
-    int deltaX = topRow.rowList.[topRow.averageIndex]-bottomRow.rowList.[bottomRow.averageIndex]; // change in x of the averages
+    int deltaX = topRow.rowList[topRow.averageIndex]-bottomRow.rowList[bottomRow.averageIndex]; // change in x of the averages
     int deltaY = bottomOfBox - topOfBox; //change in y (diffrance between top and bottom of box)
-    double gradent = deltaY / deltaX; // the diffrance between the middle of the top and bottom
 
+
+    double gradent;
+    if(deltaX != 0){
+		gradent = deltaY / deltaX; // the diffrance between the middle of the top and bottom
+		cout << "gradient calculated" << endl;
+	}else{
+		gradent = 0;
+    }
     //sets the top average pixel to red
-    set_pixel(topOfBox, topRow.rowList.[topRow.averageIndex], 255, 0, 0);
+    cout << "topRow.rowList[topRow.averageIndex]" << topRow.rowList[topRow.averageIndex] <<endl;
+    set_pixel(topOfBox, topRow.rowList[topRow.averageIndex], 255, 0, 0);
     //sets the bottom average pixel to red
-    set_pixel(bottomOfBox, bottomRow.rowList.[bottomRow.averageIndex], 255, 0, 0);
+    set_pixel(bottomOfBox, bottomRow.rowList[bottomRow.averageIndex], 255, 0, 0);
+    cout << "bottomRow.rowList[bottomRow.averageIndex]" << bottomRow.rowList[bottomRow.averageIndex] <<endl;
 
     //sets the left motor speed 
     motorDrive(320,0,gradent,false,leftMotorPort);
     //sets the right motor speed
     motorDrive(320,0,gradent,true,rightMotorPort);
-    
+    cout << "motor drives passed" << endl;
     update_screen();
 
     //drives the motors
@@ -221,13 +234,30 @@ void pushPole(){
 
 //------- Main ---------
 int main() {
-    openGate()
+	
+	int err = init(0);
+	cout << "error:" << err << endl;
+	open_screen_stream();
+	
+    //openGate();
     cout << "open gate passed" << endl;
 
 
     while(true){
         followLine();
+        //take_picture();
+        //for(int currentX =0; currentX < totalXPixels; currentX +=1){
+		//	for(int currentY =0; currentY < totalYPixesl; currentY +=1){
+		//		isblack(currentX,currentY);
+		//	}
+		//}
+        
+        
+        update_screen();
         sleep1(20);
+        int buffer;
+        cout << "enter int" << endl;
+        cin >> buffer;
     }
     cout << "follow line passed" << endl;
 
