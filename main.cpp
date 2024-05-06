@@ -17,13 +17,13 @@ const int totalXPixels = 320;
 const int totalYPixesl = 240;
 
 //Motor Varables
-const int leftMotorPort = 1;  //port number for the left motor
+const int leftMotorPort = 5;  //port number for the left motor
 const bool leftMotorReversed = false; // is the left motor fliped
 
-const int rightMotorPort = 2; //port number for the right motor
+const int rightMotorPort = 3; //port number for the right motor
 const bool rightMotorReversed = true; // is the right motor fliped
 
-const int cameraMotorPort = 3;//port number for the camera motor
+const int cameraMotorPort = 1;//port number for the camera motor
 const bool cameraMotorReversed = false; // is the camera motor fliped
 
 //Black detection Varables
@@ -45,7 +45,7 @@ struct rowInfo{
     int firstBlackPixelX;
     int lastBlackPixelX;
     int averageX;
-    bool rowList[rightOfBox-leftOfBox];
+    bool rowList[totalXPixels];
 };
 
 //------------------------- Static Functions ---------------------------
@@ -78,17 +78,21 @@ rowInfo blackRowRead(int rowToRead){
     rowInfo output;
     bool firstBlackPixel = true;
     for(int currentXPixel =leftOfBox; currentXPixel< rightOfBox; currentXPixel+=1){
-        if(firstBlackPixel){
-            output.firstBlackPixelX = currentXPixel;
-            firstBlackPixel = false;
-        }
-        output.lastBlackPixelX = currentXPixel;
-        output.rowList[currentXPixel] = isblack(currentXPixel,rowToRead);
+		if(isblack(currentXPixel,rowToRead)){
+			if(firstBlackPixel){
+				output.firstBlackPixelX = currentXPixel;
+				firstBlackPixel = false;
+			}
+			output.lastBlackPixelX = currentXPixel;
+			output.rowList[currentXPixel] = true;
+		}else{
+			output.rowList[currentXPixel] = false;
+		}
+        
     }
-    
-    cout << "calculated average:" << (output.lastBlackPixelX-output.firstBlackPixelX)/2 << endl;
 
-    output.averageX = ((output.lastBlackPixelX-output.firstBlackPixelX)/2) + output.firstBlackPixelX;
+    output.averageX = (output.lastBlackPixelX - output.firstBlackPixelX)/2 + output.firstBlackPixelX;
+
 
     return output;
 }
@@ -190,40 +194,53 @@ void openGate(){
 
 void followLine(){
     take_picture();
-
-    int firstBlackPixelX;
-    int lastBlackPixelX;
-    int averageX;
-    bool rowList[rightOfBox-leftOfBox];
-    
     
     rowInfo topRow = blackRowRead(topOfBox);
     rowInfo bottomRow = blackRowRead(bottomOfBox);
 
-    int deltaX = topRow.rowList[topRow.averageX]-bottomRow.rowList[bottomRow.averageX]; // change in x of the averages
+    int deltaX = topRow.averageX-bottomRow.averageX; // change in x of the averages
     int deltaY = bottomOfBox - topOfBox; //change in y (diffrance between top and bottom of box)
-
+	
     double gradent;
     if(deltaX != 0){
 		gradent = deltaY / deltaX; // the diffrance between the middle of the top and bottom
-		cout << "gradient calculated" << endl;
 	}else{
 		gradent = 0;
     }
     //draws the box of where it is checking
-    drawBox(leftOfBox,rightOfBox,topOfBox,bottomOfBox);
+    drawBox(leftOfBox,rightOfBox,topOfBox-1,bottomOfBox+1);
 
     //sets the top average pixel to red
     set_pixel(topOfBox, topRow.averageX, 255, 0, 0);
-    
     //sets the bottom average pixel to red
     set_pixel(bottomOfBox, bottomRow.averageX, 255, 0, 0);
-
-    //sets the left motor speed 
-    motorDrive(320,0,gradent,false,leftMotorPort);
-    //sets the right motor speed
-    motorDrive(320,0,gradent,true,rightMotorPort);
-
+    
+    
+	cout << "motor drive started" << endl;
+	if(gradent == 0){
+		//set_motors(leftMotorPort,45);
+		//set_motors(rightMotorPort,45);
+	}
+		
+	if(gradent > 0){
+		cout << "go right" << endl;
+		
+		//sets the left motor speed 
+		//motorDrive(320,0,gradent,false,leftMotorPort);
+		//sets the right motor speed
+		//motorDrive(320,0,gradent,true,rightMotorPort);
+		
+	}
+	if(gradent < 0){
+		
+		cout << "go left" << endl;
+		//sets the left motor speed 
+		//motorDrive(320,0,abs(gradent),true,leftMotorPort);
+		//sets the right motor speed
+		//motorDrive(320,0,abs(gradent),false,rightMotorPort);
+	}
+    
+	cout << "motor drive finished" << endl;
     //updates the screen
     update_screen();
 
@@ -248,8 +265,7 @@ int main() {
     //openGate();
     cout << "open gate passed" << endl;
 
-
-    while(true){
+	for(int k = 0; k < 100; k +=1){
         followLine();
         //take_picture();
         //for(int currentX =0; currentX < totalXPixels; currentX +=1){
@@ -259,12 +275,12 @@ int main() {
 		//}
         
         
-        update_screen();
         sleep1(20);
-        int buffer;
-        cout << "enter int" << endl;
-        cin >> buffer;
     }
+    
+    //set_motors(leftMotorPort,45);
+    //set_motors(rightMotorPort,45);
+
     cout << "follow line passed" << endl;
 
     
