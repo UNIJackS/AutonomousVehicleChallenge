@@ -51,3 +51,34 @@ Static functions
 
 
 main loop decides when to call the 4 dynamic functions.
+
+
+
+
+start date   task description	                                                              responsible team member	end date	outcome
+
+Week 1
+2/5/2024   Build the minimum viable product (MVP) of the robot. No fancy bells or whistles     Vincent Wong & Abid Hossain  9/5/2024    
+
+2/5/2024   Program the gate opening and basic line following functions.                        Jack Scrivener           9/5/2024   
+
+week 2
+9/5/2024   tune the line following using the MVP robot                                         Abid Hossain            16/5/2024       
+
+9/5/2024   Make upgrades to the robot as neeed during testing                                  Vincent Wong            16/5/2024
+
+9/5/2024   Program the intersection and pole pushing functions                                 Jack Scrivener          16/5/2024
+
+week 3 
+16/5/2024  tune the intersection and pole pushing functions                                    Abid Hossain            23/5/2024
+
+16/5/2024  Make any final upgrades to the robot as needed during testing                        Vincent Wong            23/5/2024
+
+16/5/2024  fix bugs in the intersection and pole pushing functions                             Jack Scrivener           23/5/2024
+
+week 4  (PANIC)
+23/5/2024  fix any programming bugs but do not add any extra functionality                     Jack Scrivener           30/5/2024
+
+23/5/2024  fix any critical design descions but do not anything unnessecary                     Vincent Wong           30/5/2024
+
+23/5/2024  Provide suppoort for programming and building                                        Abid Hossain           30/5/2024

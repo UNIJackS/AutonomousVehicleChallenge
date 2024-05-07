@@ -49,6 +49,9 @@ struct rowInfo{
 };
 
 //------------------------- Static Functions ---------------------------
+
+//takes an the x and y value of a pixel and checks if its black
+//if it is then it makes it green
 bool isblack(int x,int y){
     int red = get_pixel(y,x,0);
     int green = get_pixel(y,x,1);
@@ -69,7 +72,6 @@ bool isblack(int x,int y){
         return true;
     }
 }
-
 
 //takes the row number
 //returns a rowInfo struct
@@ -97,8 +99,7 @@ rowInfo blackRowRead(int rowToRead){
     return output;
 }
 
-
-
+//This takes a left, rght, top and bottom side and draws a box
 void drawBox(int left,int right,int top,int bottom) {
 	//This draws the green left and right lines
 	for (int currentRow = 0; currentRow < (bottom - top) ; currentRow += 1) {
@@ -118,7 +119,6 @@ void drawBox(int left,int right,int top,int bottom) {
 //current vlaue is the value inisde the range to be written to the motors
 //revers is weather to reverse the motor
 //port is the port to be written to 
-//returns nothing
 void motorDrive(int maxValue, int minValue, int currentValue, bool reverse, int port) {
     //-------------------------------------- Input Checking -------------------------------------- 
     //checks to make sure current value is not negative as this will mess up maths
