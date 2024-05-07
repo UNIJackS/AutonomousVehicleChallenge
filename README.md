@@ -56,15 +56,15 @@ main loop decides when to call the 4 dynamic functions.
 
 | Start date | Task description | Responsible team member | End date | Outcome |
 | ------ | ------ | ------ | ------ | ------ |
-| 2/5/2024| Build the minimum viable product (MVP) of the robot. No fancy bells or whistles| Vincent Wong & Abid Hossain| 9/5/2024| Ahead of due date by three days|
+| Week 1: 2/5/2024| Build the minimum viable product (MVP) of the robot. No fancy bells or whistles| Vincent Wong & Abid Hossain| 9/5/2024| Ahead of due date by three days|
 | 2/5/2024|Program the gate opening and basic line following functions.|Jack Scrivener|9/5/2024|...|
-| 9/5/2024|Tune the line following using the MVP robot|Abid Hossain| 16/5/2024|...|
+| Week 2: 9/5/2024|Tune the line following using the MVP robot|Abid Hossain| 16/5/2024|...|
 | 9/5/2024|Make upgrades to the robot as neeed during testing| Vincent Wong|16/5/2024 |...|
 | 9/5/2024|Program the intersection and pole pushing functions |Jack Scrivener |16/5/2024 |...|
-| 16/5/2024|Tune the intersection and pole pushing functions| Abid Hossain| 23/5/2024|...|
+| Week 3: 16/5/2024|Tune the intersection and pole pushing functions| Abid Hossain| 23/5/2024|...|
 | 16/5/2024|Make any final upgrades to the robot as needed during testing|Vincent Wong| 23/5/2024|...|
 | 16/5/2024|Fix bugs in the intersection and pole pushing functions|Jack Scrivener| 23/5/2024|...|
-| 23/5/2024|Fix any programming bugs but do not add any extra functionality|Jack Scrivener| 30/5/2024|...|
+| Week 4 (PANIC): 23/5/2024|Fix any programming bugs but do not add any extra functionality|Jack Scrivener| 30/5/2024|...|
 | 23/5/2024|Fix any critical design descions but do not anything unnessecary|Vincent Wong| 30/5/2024|...|
 | 23/5/2024|Provide suppoort for programming and building|Abid Hossain| 30/5/2024|...|
 
