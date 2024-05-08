@@ -35,6 +35,9 @@ const int rightOfBox = 210; //px
 const int topOfBox = 82; //px
 const int bottomOfBox = 158; //px
 
+const double maxGradent = (bottomOfBox-topOfBox)/(rightOfBox -leftOfBox)
+
+
 
 char serverAddress[15] = {'1','3','0','.','1','9','5','.','3','.','5','3'}; // server address
 int serverPort = 1024; //server port
@@ -117,22 +120,10 @@ void drawBox(int left,int right,int top,int bottom) {
 //maximum vlaue is the maximum value for the input range
 //minimum value is the minimum value for the input range
 //current vlaue is the value inisde the range to be written to the motors
-//revers is weather to reverse the motor
+//revers is weather to reverse the motor useful for left and right
 //port is the port to be written to 
-void motorDrive(int maxValue, int minValue, int currentValue, bool reverse, int port) {
-    //-------------------------------------- Input Checking -------------------------------------- 
-    //checks to make sure current value is not negative as this will mess up maths
-    if (currentValue <= 0) {
-        cout << "motorDrive:value is negative" << endl;
-        cout << "motorDrive:value :" << currentValue << endl;
-        return;
-    };
-    //checks to make sure min value is not negative as this will mess up maths
-    if (minValue < 0) {
-        cout << "motorDrive:min is negative" << endl;
-        cout << "motorDrive:min:" << minValue << endl;
-        return;
-    };
+void motorDrive(double maxValue, double minValue, double currentValue, bool reverse, int port) {
+    
     //checsk to make sure the min is lower than the max
     if (maxValue < minValue) {
         cout << "motorDrive:min must be greater than 0" << endl;
@@ -140,11 +131,15 @@ void motorDrive(int maxValue, int minValue, int currentValue, bool reverse, int 
         return;
     };
             
-    //-------------------------------------- Actual function -------------------------------------- 
+    //this is done to make all the values positive
+    double shiftedMaxValue = maxValue + maxGradent;
+    double shiftedMinValue = minValue + maxGradent;
+    double shiftedCurrentValue = currentValue + maxGradent;
+
 
     //casted to doubles because other wise interger divisoion is truncated
     //rounding used here so that 2.6 doesnt go to 2 but 3 so motors are more accurite
-    int pwm = round(currentValue / ((double)(maxValue - minValue) / (double)(30)) + 30);
+    int pwm = round(shiftedCurrentValue / ((double)(shiftedMaxValue - shiftedMinValue) / (double)(30)) + 30);
     cout << "pwm" << pwm << endl;
 
     //checks to make sure pwm is greater than 30 and less than 60 to not fry motors
@@ -216,28 +211,21 @@ void followLine(){
     set_pixel(bottomOfBox, bottomRow.averageX, 255, 0, 0);
     
     
+    
 	cout << "motor drive started" << endl;
+    //sets the left motor speed 
+    motorDrive(maxGradent,-maxGradent,gradent,leftMotorReversed,leftMotorPort);
+    //sets the right motor speed
+    motorDrive(maxGradent,-maxGradent,gradent,rightMotorReversed,rightMotorPort);
 	if(gradent == 0){
-		//set_motors(leftMotorPort,45);
-		//set_motors(rightMotorPort,45);
+		cout << "go straight" << endl
 	}
 		
 	if(gradent > 0){
 		cout << "go right" << endl;
-		
-		//sets the left motor speed 
-		//motorDrive(320,0,gradent,false,leftMotorPort);
-		//sets the right motor speed
-		//motorDrive(320,0,gradent,true,rightMotorPort);
-		
 	}
 	if(gradent < 0){
-		
 		cout << "go left" << endl;
-		//sets the left motor speed 
-		//motorDrive(320,0,abs(gradent),true,leftMotorPort);
-		//sets the right motor speed
-		//motorDrive(320,0,abs(gradent),false,rightMotorPort);
 	}
     
 	cout << "motor drive finished" << endl;
@@ -262,24 +250,17 @@ int main() {
 	cout << "error:" << err << endl;
 	open_screen_stream();
 	
-    //openGate();
+    openGate();
     cout << "open gate passed" << endl;
 
 	for(int k = 0; k < 100; k +=1){
         followLine();
-        //take_picture();
-        //for(int currentX =0; currentX < totalXPixels; currentX +=1){
-		//	for(int currentY =0; currentY < totalYPixesl; currentY +=1){
-		//		isblack(currentX,currentY);
-		//	}
-		//}
-        
         
         sleep1(20);
     }
     
-    //set_motors(leftMotorPort,45);
-    //set_motors(rightMotorPort,45);
+    set_motors(leftMotorPort,45);
+    set_motors(rightMotorPort,45);
 
     cout << "follow line passed" << endl;
 
