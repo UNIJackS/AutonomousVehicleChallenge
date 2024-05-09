@@ -154,6 +154,10 @@ void followLine(long long &prevousTime, double &totalPastIntegral,double &prevou
     long long currentTime = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
     long long timeBewtweenMeasueres = currentTime - prevousTime;
 
+    //REMOVE
+    cout << "timeBewtweenMeasueres:" << timeBewtweenMeasueres << endl;
+    //REMOVE
+
     //The distance from the center of the screen to the average black pixel
     double error = (double)(readRow(bottomOfBox) - totalXPixels / 2);
 
@@ -166,7 +170,10 @@ void followLine(long long &prevousTime, double &totalPastIntegral,double &prevou
     double kd = 0.25; //the gain fo the derivative section
     double output = kp * error + ki * ((error * timeBewtweenMeasueres) + totalPastIntegral) + kd * ((error - prevousError) / timeBewtweenMeasueres);
 
+
+    //REMOVE
     cout << "output:" << output << endl;
+    //REMOVE
 
     //Sets values for next time
     totalPastIntegral += error * totalPastIntegral;
