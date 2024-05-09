@@ -69,7 +69,7 @@ bool isblack(int x, int y) {
 }
 
 //takes the row number
-//returns 
+//returns the mean of the black pixels in the row
 int readRow(int rowToRead) {
     int count = 0;
     int total = 0;
@@ -101,7 +101,8 @@ void drawBox(int left, int right, int top, int bottom) {
 //used to double check motor polarity
 void testMotors() {
     int pwm = 55;
-    if (flipMotors) {
+    cout << "if flipMotors is true" << endl;
+    if (true) {
         set_motors(leftMotorPort, 65 - (pwm - 31));
         set_motors(rightMotorPort, pwm);
     }
@@ -109,6 +110,20 @@ void testMotors() {
         set_motors(leftMotorPort, pwm);
         set_motors(rightMotorPort, 65 - (pwm - 31));
     }
+    cout << "driving for 5 seconds ..." << endl;
+    sleep1(5000);
+
+    cout << "if flipMotors is false" << endl;
+    if (false) {
+        set_motors(leftMotorPort, 65 - (pwm - 31));
+        set_motors(rightMotorPort, pwm);
+    }
+    else {
+        set_motors(leftMotorPort, pwm);
+        set_motors(rightMotorPort, 65 - (pwm - 31));
+    }
+    cout << "driving for 5 seconds ..." << endl;
+    sleep1(5000);
 }
 
 
@@ -214,16 +229,16 @@ int main() {
     openGate();
     cout << "open gate passed" << endl;
 
+    //REMOVE
+    testMotors();
+    //REMOVE
+
 
     long long prevousTime = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
     double totalPastIntegral = 0;
     double prevousError = 0;
     while (true) {
-        testMotors();
-
-        //followLine(prevousTime, totalPastIntegral, prevousError);
-
-
+        followLine(prevousTime, totalPastIntegral, prevousError);
         sleep1(20);
     }
 
