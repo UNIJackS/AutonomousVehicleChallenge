@@ -18,24 +18,24 @@ const int totalYPixesl = 240;
 
 //Motor Varables
 const int leftMotorPort = 5;  //port number for the left motor
-const bool leftMotorReversed = false; // is the left motor fliped
+const bool leftMotorReversed = true; // is the left motor fliped
 
 const int rightMotorPort = 3; //port number for the right motor
-const bool rightMotorReversed = true; // is the right motor fliped
+const bool rightMotorReversed = false; // is the right motor fliped
 
 const int cameraMotorPort = 1;//port number for the camera motor
 const bool cameraMotorReversed = false; // is the camera motor fliped
 
 //Black detection Varables
 const float blackTolarance = 10; // The value by which red green and blue can differ and still be black
-const int maxIntensity  = 100; // The maximum value of red + green + blue values to still be black
+const int maxIntensity  = 60; // The maximum value of red + green + blue values to still be black
 
-const int leftOfBox = 110; //px
-const int rightOfBox = 210; //px
-const int topOfBox = 82; //px
-const int bottomOfBox = 158; //px
+const int leftOfBox = 20; //px
+const int rightOfBox = 300; //px
+const int topOfBox = 20; //px
+const int bottomOfBox = 200; //px
 
-const double maxGradent = (bottomOfBox-topOfBox)/(rightOfBox -leftOfBox)
+const int maxOffSet = rightOfBox-leftOfBox; 
 
 
 
@@ -122,26 +122,20 @@ void drawBox(int left,int right,int top,int bottom) {
 //current vlaue is the value inisde the range to be written to the motors
 //revers is weather to reverse the motor useful for left and right
 //port is the port to be written to 
-void motorDrive(double maxValue, double minValue, double currentValue, bool reverse, int port) {
-    
-    //checsk to make sure the min is lower than the max
-    if (maxValue < minValue) {
-        cout << "motorDrive:min must be greater than 0" << endl;
-        cout << "motorDrive:Current value of min:" << minValue << endl;
-        return;
-    };
-            
-    //this is done to make all the values positive
-    double shiftedMaxValue = maxValue + maxGradent;
-    double shiftedMinValue = minValue + maxGradent;
-    double shiftedCurrentValue = currentValue + maxGradent;
-
-
-    //casted to doubles because other wise interger divisoion is truncated
-    //rounding used here so that 2.6 doesnt go to 2 but 3 so motors are more accurite
-    int pwm = round(shiftedCurrentValue / ((double)(shiftedMaxValue - shiftedMinValue) / (double)(30)) + 30);
-    cout << "pwm" << pwm << endl;
-
+void motorDrive(double currentOffSet, bool reverse, int port) {
+	
+	
+	//maps from 0 to 60 - 46 = 14
+	int initalPWM = 55;
+	//17
+	int PWMRange = 65-initalPWM;
+	
+	cout << "calculated value" <<  (currentOffSet/((double)(2*maxOffSet)/(double)(PWMRange))) << endl;
+	
+	int pwm = (currentOffSet/((double)(2*maxOffSet)/(double)(PWMRange)));
+	
+	cout << "pwm:" << initalPWM+pwm << endl;
+	
     //checks to make sure pwm is greater than 30 and less than 60 to not fry motors
     if (pwm < 30 && pwm > 60) {
         cout << "motorDrive:pwm out of range (30 to 60)" << endl;
@@ -150,11 +144,15 @@ void motorDrive(double maxValue, double minValue, double currentValue, bool reve
     }else {
         //fips pwm for reverse
         if (reverse) {
-            pwm = 60 - (pwm - 30);
+            pwm = initalPWM +pwm;
+            pwm = 68 - (pwm-31);
             set_motors(port,pwm);
+            
         }
         else {
+			pwm = initalPWM +pwm;
             set_motors(port,pwm);
+            
         }
     } 
 }
@@ -193,15 +191,9 @@ void followLine(){
     rowInfo topRow = blackRowRead(topOfBox);
     rowInfo bottomRow = blackRowRead(bottomOfBox);
 
-    int deltaX = topRow.averageX-bottomRow.averageX; // change in x of the averages
-    int deltaY = bottomOfBox - topOfBox; //change in y (diffrance between top and bottom of box)
+    int deltaX = bottomRow.averageX-160; // change in x of the averages
 	
-    double gradent;
-    if(deltaX != 0){
-		gradent = deltaY / deltaX; // the diffrance between the middle of the top and bottom
-	}else{
-		gradent = 0;
-    }
+	
     //draws the box of where it is checking
     drawBox(leftOfBox,rightOfBox,topOfBox-1,bottomOfBox+1);
 
@@ -212,23 +204,13 @@ void followLine(){
     
     
     
-	cout << "motor drive started" << endl;
     //sets the left motor speed 
-    motorDrive(maxGradent,-maxGradent,gradent,leftMotorReversed,leftMotorPort);
+    motorDrive(deltaX,leftMotorReversed,leftMotorPort);
     //sets the right motor speed
-    motorDrive(maxGradent,-maxGradent,gradent,rightMotorReversed,rightMotorPort);
-	if(gradent == 0){
-		cout << "go straight" << endl
-	}
-		
-	if(gradent > 0){
-		cout << "go right" << endl;
-	}
-	if(gradent < 0){
-		cout << "go left" << endl;
-	}
+    motorDrive(deltaX,rightMotorReversed,rightMotorPort);
+
+
     
-	cout << "motor drive finished" << endl;
     //updates the screen
     update_screen();
 
@@ -236,6 +218,8 @@ void followLine(){
     hardware_exchange();
 }
 void intersections(){
+	
+	
     
 }
 void pushPole(){
@@ -250,11 +234,24 @@ int main() {
 	cout << "error:" << err << endl;
 	open_screen_stream();
 	
+	//set_motors(leftMotorPort,56);
+    //set_motors(rightMotorPort,40);
+    //hardware_exchange();
+	
     openGate();
     cout << "open gate passed" << endl;
 
-	for(int k = 0; k < 100; k +=1){
+	while(true){
         followLine();
+        //nt pwm = 55;
+        
+        //set_motors(leftMotorPort,pwm);
+        
+        //pwm = 65-(pwm-31);
+        
+        //set_motors(rightMotorPort,pwm);
+        
+        //hardware_exchange();
         
         sleep1(20);
     }
