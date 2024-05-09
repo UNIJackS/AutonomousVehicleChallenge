@@ -7,7 +7,7 @@
 #include <iostream> // input-output library 
 #include <math.h> //used for rounding function
 #include "E101.h" // VUW camera library
-#include <chrono>
+#include <chrono> //used for 
 
 using namespace::std;
 
@@ -165,16 +165,16 @@ void followLine(long long &prevousTime, double &totalPastIntegral,double &prevou
     cout << "timeBewtweenMeasueres:" << timeBewtweenMeasueres << endl;
     //REMOVE
 
-    //The distance from the center of the screen to the average black pixel
+    //The distance from the center of the screen to the average black pixel (center is 160)
     double error = (double)(readRow(bottomOfBox) - totalXPixels / 2);
 
     //sets the bottom average pixel to red
     set_pixel(bottomOfBox, error, 255, 0, 0);
 
     //Gains for the PID
-    double kp = 0.25; //the gain of the proption section
-    double ki = 0.25; //the gain of the Integral section
-    double kd = 0.25; //the gain fo the derivative section
+    double kp = 0.03; //the gain of the proption section
+    double ki = 0.02; //the gain of the Integral section
+    double kd = 0.02; //fthe gain fo the derivative section
     double output = kp * error + ki * ((error * timeBewtweenMeasueres) + totalPastIntegral) + kd * ((error - prevousError) / timeBewtweenMeasueres);
 
 
@@ -187,7 +187,7 @@ void followLine(long long &prevousTime, double &totalPastIntegral,double &prevou
     prevousTime = currentTime;
     prevousError = error;
 
-    int pwm = 55 + output;
+    int pwm = 55 + round(output);
     //restricts pwm to writable values
     if (pwm > 65) {
         pwm = 65;
