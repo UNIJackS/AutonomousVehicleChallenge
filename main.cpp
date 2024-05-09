@@ -7,6 +7,7 @@
 #include <iostream> // input-output library 
 #include <math.h> //used for rounding function
 #include "E101.h" // VUW camera library
+#include <chrono>
 
 using namespace::std;
 
@@ -44,12 +45,6 @@ int serverPort = 1024; //server port
 
 //used to store instructions to drive each motor
 
-struct rowInfo{
-    int firstBlackPixelX;
-    int lastBlackPixelX;
-    int averageX;
-    bool rowList[totalXPixels];
-};
 
 //------------------------- Static Functions ---------------------------
 
@@ -78,28 +73,25 @@ bool isblack(int x,int y){
 
 //takes the row number
 //returns a rowInfo struct
-rowInfo blackRowRead(int rowToRead){
-    //creates a rowInfo object to store all the info
-    rowInfo output;
+int readRow(int rowToRead){
+
     bool firstBlackPixel = true;
+
+    int lastBlackPixelX;
+    int firstBlackPixelX;
+
     for(int currentXPixel =leftOfBox; currentXPixel< rightOfBox; currentXPixel+=1){
 		if(isblack(currentXPixel,rowToRead)){
+            //sets the first black pixel if this is the first black pixel detected
 			if(firstBlackPixel){
 				output.firstBlackPixelX = currentXPixel;
 				firstBlackPixel = false;
 			}
-			output.lastBlackPixelX = currentXPixel;
-			output.rowList[currentXPixel] = true;
-		}else{
-			output.rowList[currentXPixel] = false;
-		}
-        
+			lastBlackPixelX = currentXPixel;        
+        }
     }
 
-    output.averageX = (output.lastBlackPixelX - output.firstBlackPixelX)/2 + output.firstBlackPixelX;
-
-
-    return output;
+    return (lastBlackPixelX - firstBlackPixelX)/2 + firstBlackPixelX;
 }
 
 //This takes a left, rght, top and bottom side and draws a box
@@ -186,13 +178,22 @@ void openGate(){
 }
 
 void followLine(){
-    take_picture();
-    
-    rowInfo topRow = blackRowRead(topOfBox);
-    rowInfo bottomRow = blackRowRead(bottomOfBox);
+    take_picture(); 
 
-    int deltaX = bottomRow.averageX-160; // change in x of the averages
-	
+    uint64_t ms = duration_cast<milliseconds>(system_clock::now().time_since_epoch()).count();
+
+    int kp = 1;
+    int ki = 1;
+    int kd = 1;
+
+    //for 320 pixesl this is 160
+    int centerOfScreen = totalXPixels/2;
+
+    //The distance from the center of the screen  to the average black pixel
+    int error = readRow(bottomOfBox) - centerOfScreen;
+
+    output = kp * error + kp *___ + kd *
+    
 	
     //draws the box of where it is checking
     drawBox(leftOfBox,rightOfBox,topOfBox-1,bottomOfBox+1);
