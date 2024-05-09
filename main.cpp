@@ -226,8 +226,8 @@ int main() {
     cout << "error:" << err << endl;
     open_screen_stream();
 
+    //Opens the gate
     openGate();
-    cout << "open gate passed" << endl;
 
     //REMOVE
     testMotors();
@@ -241,9 +241,6 @@ int main() {
         followLine(prevousTime, totalPastIntegral, prevousError);
         sleep1(20);
     }
-
-    cout << "follow line passed" << endl;
-
 
     return 0;
 }
