@@ -69,26 +69,18 @@ bool isblack(int x, int y) {
 }
 
 //takes the row number
-//returns a rowInfo struct
+//returns 
 int readRow(int rowToRead) {
-
-    bool firstBlackPixel = true;
-
-    int lastBlackPixelX;
-    int firstBlackPixelX;
-
+    int count = 0;
+    int total = 0;
     for (int currentXPixel = leftOfBox; currentXPixel < rightOfBox; currentXPixel += 1) {
         if (isblack(currentXPixel, rowToRead)) {
-            //sets the first black pixel if this is the first black pixel detected
-            if (firstBlackPixel) {
-                output.firstBlackPixelX = currentXPixel;
-                firstBlackPixel = false;
-            }
-            lastBlackPixelX = currentXPixel;
+            count +=1;
+            total += currentXPixel;
         }
     }
 
-    return (lastBlackPixelX - firstBlackPixelX) / 2 + firstBlackPixelX;
+    return total/count;
 }
 
 //This takes a left, rght, top and bottom side and draws a box
@@ -218,10 +210,6 @@ int main() {
     int err = init(0);
     cout << "error:" << err << endl;
     open_screen_stream();
-
-    //set_motors(leftMotorPort,56);
-    //set_motors(rightMotorPort,40);
-    //hardware_exchange();
 
     openGate();
     cout << "open gate passed" << endl;
