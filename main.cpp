@@ -9,19 +9,20 @@
 #include "E101.h" // VUW camera library
 #include <chrono> //used for 
 
-using namespace::std;
+using namespace  std;
 
 
 //------- Global Varables ---------
-//used for camera reading
-const int totalXPixels = 320;
-const int totalYPixesl = 240;
+//Gains for the PID
+const double kp = 0.06; //the gain of the proption section
+const double ki = 0.0; //the gain of the Integral section
+const double kd = 0.0; //fthe gain fo the derivative section
 
 //Motor varables
 const int leftMotorPort = 5;  //port number for the left motor
 const int rightMotorPort = 3; //port number for the right motor
 const int cameraMotorPort = 1;//port number for the camera motor
-const bool flipMotors = true;
+const bool flipMotors = false;
 
 //Black detection Varables
 const float blackTolarance = 10; // The value by which red green and blue can differ and still be black
@@ -30,17 +31,14 @@ const int maxIntensity = 60; // The maximum value of red + green + blue values t
 const int leftOfBox = 20; //px
 const int rightOfBox = 300; //px
 const int topOfBox = 20; //px
-const int bottomOfBox = 200; //px
+const int bottomOfBox = 120; //px
 
-const int maxOffSet = rightOfBox - leftOfBox;
-
-
+//used for camera reading
+const int totalXPixels = 320;
+const int totalYPixesl = 240;
 
 char serverAddress[15] = { '1','3','0','.','1','9','5','.','3','.','5','3' }; // server address
 int serverPort = 1024; //server port
-
-//used to store instructions to drive each motor
-
 
 //------------------------- Static Functions ---------------------------
 
@@ -70,7 +68,7 @@ bool isblack(int x, int y) {
 
 //takes the row number
 //returns the mean of the black pixels in the row
-int readRow(int rowToRead) {
+int readRow(int rowToRead,bool &present) {
     int count = 0;
     int total = 0;
     for (int currentXPixel = leftOfBox; currentXPixel < rightOfBox; currentXPixel += 1) {
@@ -79,8 +77,16 @@ int readRow(int rowToRead) {
             total += currentXPixel;
         }
     }
+    if(count > 0 ){
+		return (total/count);
+	}else{
+		cout << "no black pixels" << endl;
+		present = false;
+		return 160;
+	}
+    
 
-    return total/count;
+    
 }
 
 //This takes a left, rght, top and bottom side and draws a box
@@ -100,6 +106,7 @@ void drawBox(int left, int right, int top, int bottom) {
 
 //used to double check motor polarity
 void testMotors() {
+	
     int pwm = 55;
     cout << "if flipMotors is true" << endl;
     if (true) {
@@ -110,6 +117,7 @@ void testMotors() {
         set_motors(leftMotorPort, pwm);
         set_motors(rightMotorPort, 65 - (pwm - 31));
     }
+    hardware_exchange();
     cout << "driving for 5 seconds ..." << endl;
     sleep1(5000);
 
@@ -123,17 +131,19 @@ void testMotors() {
         set_motors(rightMotorPort, 65 - (pwm - 31));
     }
     cout << "driving for 5 seconds ..." << endl;
+    hardware_exchange();
     sleep1(5000);
+   
 }
 
 
 
 
 
-//------- Dynamic Functions ---------
+//------- Dynamic Functions ------``---
 void openGate() {
     //attempts to connect to gate
-    connected = connect_to_server(serverAddress, serverPort);
+    int connected = connect_to_server(serverAddress, serverPort);
     if (connected != 0) {
         cout << "error connectiong to gate, code:" << connected << endl;
     }
@@ -161,53 +171,65 @@ void followLine(long long &prevousTime, double &totalPastIntegral,double &prevou
     long long currentTime = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
     long long timeBewtweenMeasueres = currentTime - prevousTime;
 
-    //REMOVE
-    cout << "timeBewtweenMeasueres:" << timeBewtweenMeasueres << endl;
-    //REMOVE
+    bool blackpresent = true;
 
     //The distance from the center of the screen to the average black pixel (center is 160)
-    double error = (double)(readRow(bottomOfBox) - totalXPixels / 2);
+    double error = (double)(readRow(bottomOfBox,blackpresent) - totalXPixels / 2);
 
-    //sets the bottom average pixel to red
-    set_pixel(bottomOfBox, error, 255, 0, 0);
+	if(blackpresent){
+		
+		//REMOVE
+		cout << "error:" << error << endl;
+		//REMOVE
 
-    //Gains for the PID
-    double kp = 0.03; //the gain of the proption section
-    double ki = 0.02; //the gain of the Integral section
-    double kd = 0.02; //fthe gain fo the derivative section
-    double output = kp * error + ki * ((error * timeBewtweenMeasueres) + totalPastIntegral) + kd * ((error - prevousError) / timeBewtweenMeasueres);
+		//sets the bottom average pixel to red
+		set_pixel(bottomOfBox, error, 255, 0, 0);
 
 
-    //REMOVE
-    cout << "output:" << output << endl;
-    //REMOVE
+		double output = kp * error + ki * ((error * timeBewtweenMeasueres) + totalPastIntegral) + kd * ((error - prevousError) / timeBewtweenMeasueres);
 
-    //Sets values for next time
-    totalPastIntegral += error * totalPastIntegral;
-    prevousTime = currentTime;
-    prevousError = error;
 
-    int pwm = 55 + round(output);
-    //restricts pwm to writable values
-    if (pwm > 65) {
-        pwm = 65;
-    }
-    else if (pwm < 30) {
-        pwm = 30;
-    }
+		//REMOVE
+		cout << "output:" << output << endl;
+		//REMOVE
 
-    if(flipMotors){
-        set_motors(leftMotorPort, 65 -(pwm-31));
-        set_motors(rightMotorPort, pwm);
-    }
-    else {
-        set_motors(leftMotorPort, pwm);
-        set_motors(rightMotorPort, 65 - (pwm - 31));
-    }
-    
-    
-    update_screen();
-    hardware_exchange();
+		//Sets values for next time
+		totalPastIntegral += error * totalPastIntegral;
+		prevousTime = currentTime;
+		prevousError = error;
+
+		int intOutput = round(output);
+		
+		if(intOutput > 10){
+			intOutput = 10;
+		}else if(intOutput < -10){
+			intOutput = -10;
+		}
+		
+		if(flipMotors){
+			set_motors(leftMotorPort, 65 -((55-intOutput)-31));
+			set_motors(rightMotorPort, 55 +intOutput);
+		}
+		else {
+			set_motors(leftMotorPort, 55 +intOutput);
+			set_motors(rightMotorPort, 65 - ((55-intOutput) - 31));
+		}
+		
+		
+		
+	}else{
+		int intOutput = 40;
+		if(flipMotors){
+			set_motors(leftMotorPort, 65 -(intOutput-31));
+			set_motors(rightMotorPort, intOutput);
+		}
+		else {
+			set_motors(leftMotorPort,intOutput);
+			set_motors(rightMotorPort, 65 - (intOutput- 31));
+		}
+	}
+	update_screen();
+	hardware_exchange();
 }
 void intersections() {
 
@@ -221,16 +243,20 @@ void pushPole() {
 
 //------- Main ---------
 int main() {
+	set_motors(1, 48);
+	set_motors(3, 48);
+	set_motors(5, 48);
 
     int err = init(0);
     cout << "error:" << err << endl;
     open_screen_stream();
 
     //Opens the gate
-    openGate();
+    //openGate();
 
+    
     //REMOVE
-    testMotors();
+    //testMotors();
     //REMOVE
 
 

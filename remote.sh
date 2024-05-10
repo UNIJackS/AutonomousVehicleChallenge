@@ -1,5 +1,5 @@
 #!\bin\sh
-IP=pi@10.141.19.99
+IP=pi@10.141.98.46
 FPI="/home/pi/Desktop/scrivejack/main.cpp"
 DPI="/home/pi/Desktop/scrivejack"
 FPC="C:\Users\10jac\OneDrive\Documents\UNI\ENGR 101\AVC\avc\main.cpp"
@@ -12,8 +12,12 @@ echo Finished
 
 raspberry
 
+g++ -o main main.cpp -le101
 
 cd /mnt/c/Users/10jac/OneDrive/Documents/UNI/'ENGR 101'/AVC/avc/remote.sh
 
 
 cp /mnt/c/Users/10jac/OneDrive/Documents/UNI/'ENGR 101'/AVC/avc/remote.sh /home/jack/avc
+
+
+

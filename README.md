@@ -95,3 +95,19 @@ week 4  (PANIC)
 23/5/2024  fix any critical design descions but do not anything unnessecary                     Vincent Wong           30/5/2024
 
 23/5/2024  Provide suppoort for programming and building                                        Abid Hossain           30/5/2024
+
+
+
+
+
+--------Testing line following--------
+kp values testing
+0.5 worked but excesive reversing due to too low
+0.53 worked but still can go higher
+0.55 worked well everywhere but the final big turn
+0.6 is too far was ossliationg /over turning at some corners
+0.58 worked best
+
+found that the intergtil and derivative where not needed (works so why change)
+
+the camera postion affected this alot as well so i took a photo of the positon that worked best
