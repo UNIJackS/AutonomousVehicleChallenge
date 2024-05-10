@@ -57,7 +57,7 @@ main loop decides when to call the 4 dynamic functions.
 | Start date | Task description | Responsible team member | End date | Outcome |
 | ------ | ------ | ------ | ------ | ------ |
 | Week 1: 2/5/2024| Build the minimum viable product (MVP) of the robot. No fancy bells or whistles| Vincent Wong & Abid Hossain| 9/5/2024| Ahead of due date by three days|
-| 2/5/2024|Program the gate opening and basic line following functions.|Jack Scrivener|9/5/2024|...|
+| 2/5/2024|Program the gate opening and basic line following functions.|Jack Scrivener|9/5/2024|Signifagant changes to aproach where required but finished on time|
 | Week 2: 9/5/2024|Tune the line following using the MVP robot|Abid Hossain| 16/5/2024|...|
 | 9/5/2024|Make upgrades to the robot as neeed during testing| Vincent Wong|16/5/2024 |...|
 | 9/5/2024|Program the intersection and pole pushing functions |Jack Scrivener |16/5/2024 |...|
@@ -67,47 +67,3 @@ main loop decides when to call the 4 dynamic functions.
 | Week 4 (PANIC): 23/5/2024|Fix any programming bugs but do not add any extra functionality|Jack Scrivener| 30/5/2024|...|
 | 23/5/2024|Fix any critical design descions but do not anything unnessecary|Vincent Wong| 30/5/2024|...|
 | 23/5/2024|Provide suppoort for programming and building|Abid Hossain| 30/5/2024|...|
-
-start date   task description	                                                              responsible team member	end date	outcome
-
-Week 1
-2/5/2024   Build the minimum viable product (MVP) of the robot. No fancy bells or whistles     Vincent Wong & Abid Hossain  9/5/2024    
-
-2/5/2024   Program the gate opening and basic line following functions.                        Jack Scrivener           9/5/2024   
-
-week 2
-9/5/2024   tune the line following using the MVP robot                                         Abid Hossain            16/5/2024       
-
-9/5/2024   Make upgrades to the robot as neeed during testing                                  Vincent Wong            16/5/2024
-
-9/5/2024   Program the intersection and pole pushing functions                                 Jack Scrivener          16/5/2024
-
-week 3 
-16/5/2024  tune the intersection and pole pushing functions                                    Abid Hossain            23/5/2024
-
-16/5/2024  Make any final upgrades to the robot as needed during testing                        Vincent Wong            23/5/2024
-
-16/5/2024  fix bugs in the intersection and pole pushing functions                             Jack Scrivener           23/5/2024
-
-week 4  (PANIC)
-23/5/2024  fix any programming bugs but do not add any extra functionality                     Jack Scrivener           30/5/2024
-
-23/5/2024  fix any critical design descions but do not anything unnessecary                     Vincent Wong           30/5/2024
-
-23/5/2024  Provide suppoort for programming and building                                        Abid Hossain           30/5/2024
-
-
-
-
-
---------Testing line following--------
-kp values testing
-0.5 worked but excesive reversing due to too low
-0.53 worked but still can go higher
-0.55 worked well everywhere but the final big turn
-0.6 is too far was ossliationg /over turning at some corners
-0.58 worked best
-
-found that the intergtil and derivative where not needed (works so why change)
-
-the camera postion affected this alot as well so i took a photo of the positon that worked best
