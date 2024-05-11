@@ -81,27 +81,28 @@ bool isblack(int x, int y) {
     }
 }
 
-//takes the row number
-//returns the mean of the black pixels in the row
-int readRow(int rowToRead,bool &present) {
+//Takes
+//the row or column number to check
+//A pointer for if there is at least 1 black pixel
+//If it is to check a column
+//returns the mean of the black pixels in the row or col
+int read(int ToRead,bool &present,bool col) {
     int count = 0;
     int total = 0;
-    for (int currentXPixel = leftOfBox; currentXPixel < rightOfBox; currentXPixel += 1) {
-        if (isblack(currentXPixel, rowToRead)) {
+
+    for (int currentXPixel = [col](){if(col){return topOfBox}else{return leftOfBox}}; currentXPixel < [col](){if(col){return bottomOfBox}else{return rightOfBox}}; currentXPixel += 1) {
+        if (isblack(currentXPixel, ToRead)) {
             count +=1;
             total += currentXPixel;
         }
     }
+
     if(count > 0 ){
-		return (total/count);
+		return ((total/count)- ([col](){if(col){return totalYPixesl}else{return totalXPixels}} / 2));
 	}else{
-		cout << "no black pixels" << endl;
 		present = false;
 		return 160;
-	}
-    
-
-    
+	}    
 }
 
 //This takes a left, rght, top and bottom side and draws a box
@@ -189,7 +190,7 @@ void followLine(long long &prevousTime, double &totalPastIntegral,double &prevou
     bool blackpresent = true;
 
     //The distance from the center of the screen to the average black pixel (center is 160)
-    double error = (double)(readRow(bottomOfBox,blackpresent) - totalXPixels / 2);
+    double error = (double)(read(bottomOfBox,blackpresent,false));
 
 	if(blackpresent){
 		
@@ -247,9 +248,34 @@ void followLine(long long &prevousTime, double &totalPastIntegral,double &prevou
 	hardware_exchange();
 }
 void intersections() {
+    take_picture();
+
+    drawBox(leftOfBox-1, rightOfBox+1, topOfBox - 1, bottomOfBox + 1);
+
+    bool forward = false;
+    bool left = false;
+    bool right = false;
+
+    double forwardError = (double)(read(topOfBox,forward,false));
+    double leftError = (double)(read(topOfBox,left,true));
+    double rightError = (double)(read(topOfBox,right,true));
+
+    if(left && leftError < 10 && leftError > -10){
+        cout <<"Left turn avalable" << endl;
+    }
+
+    if(right && rightError < 10 && rightError > -10 ){
+        cout <<" right turn avlable" << endl;
+    }
+
+    
 
 
 
+
+
+    update_screen();
+	hardware_exchange();
 }
 void pushPole() {
 
@@ -267,12 +293,9 @@ int main() {
     open_screen_stream();
 
     //Opens the gate
-    //openGate();
+    openGate();
 
-    
-    //REMOVE
-    //testMotors();
-    //REMOVE
+
 
 
     long long prevousTime = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
