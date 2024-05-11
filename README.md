@@ -9,7 +9,7 @@ Team 15
 - Abid Hossain ( hossaiabid ) hossaiabid@ecs.vuw.ac.nz          -Tester
     -Tests the code for the robot and provides help to other roles while no testing is needed
 
-- Nick Yannan Luo ( luoyann ) luoyann@ecs.vuw.ac.nz             -
+- Nick Yannan Luo ( luoyann ) luoyann@ecs.vuw.ac.nz             -Absent
 
 - Jack Scrivener ( scrivejack ) scrivejack@ecs.vuw.ac.nz        -Programmer
     -Designs and writes program for robot
@@ -19,38 +19,59 @@ Team 15
 
 
 
+
 --------------- Program design ---------------
-there will be 4 dynamic functions some static functions called by the dynamic functions
-and a main loop that calls the dynamic functions
+The Program will consist of 5 main functions one for each of the 4 major sections of the course and 1 for detecting if
+the section has changed. These 4 main functions will be supported by some static functions which will do basic things
+like reading a row or column and returning the average black pixel or checking if a pixel is black.
 
-Dynamic functions
-1 - Open the gate 
-    -This will take nothing and open the gate for the robot
+4 main functions 
+- Open gate (section 1)
+    -This will communicate with the server and open the gate for the robot
 
-2 - line following 
-    -This will take nothing and will make the robot follow the line
+- line following (section 2)
+    -This will make the robot cruise at a speed and try to keep the line in the middle of the camera. It will
+     do this using a PID system to 
 
-3 - Intersections 
-    -This will control the robot through the intersections
+- Intersections  (section 3)
+    -This will make the robot navigate through the intersections. It will detect what turns are
+     available to it and then always make a left turn if possible, then go straight if possible, then
+     right if possible and if no turns are available turn around.
 
-4 - Red pole pusher
-    -This will make the robot push the red pole
+- Red ball pusher (section 4)
+    -This will turn the camera to face forward and then search for the red ball by spinning ~360 deg. If it is
+     not detected then it will move and spin again. If the ball is detected then it will attempt to keep it 
+     directly in front of the robot and cruise at a constant speed similar to the line following
+
+- section change
+    -This will be called during sections 2 and 3 to check if the red section change markers are detected.
+     It will do this by checking if the number of red pixels in the screen is above a threshold value.
 
 Static functions
-- motor drive 
-    - takes motor instructions struct
-    - writes to the motor the mapped value
+- read 
+    -This will take a row or column number, a reference to a bool for if at least 1 black pixel is detected and a bool
+     for if a column or row is to be read. 
+    - This will return the distance from the centre of the screen to the average (mean) black pixel in the screen.
 
-- whole image read
-    - returns 2D array
-    - takes void
+- is black 
+    -This will take an x and y coordinate of the pixel to be checked
+    -This will return a bool of if the pixel is black. it will do this by checking if the intensity is below a threshold
+     value and the RGB values are within a threshold value of each other. 
 
-- row read 
-    - returns array
-    - takes a row number 
+- draw box 
+    -This will take a left, right, top and bottom value and draw a box to the screen with these values
+
+- test motors
+    -This will check the polarity of the motors to make sure the motors are being driven correctly
+     This will be done by driving the left motor backwards and the right motor forward and then waiting for 5 seconds
+     and repeating this process except reversing which motor is driven backwards.
+
+other static functiosns will probably be added as required. 
+
+The main loop will call each function of the main 4 functions and the section change function to decide when
+to change between the 4 main functions. Except for the open gate function as there is no marker.
 
 
-main loop decides when to call the 4 dynamic functions.
 
 
 
