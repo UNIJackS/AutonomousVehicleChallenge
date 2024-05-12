@@ -13,10 +13,12 @@ using namespace  std;
 
 
 //------- Global Varables ---------
-//Gains for the PID
-const double kp = 0.06; //the gain of the proption section
+//Line following varables
+const double kp = 0.055; //the gain of the proption section
 const double ki = 0.0; //the gain of the Integral section
-const double kd = 0.0; //fthe gain fo the derivative section
+const double kd = 0.0; //tthe gain of the derivative section
+
+const int rowToCheck = 120; //The row that the fucntion checks to generate its error
 
 /*
 kp values testing
@@ -32,6 +34,12 @@ the camera postion affected this alot as well so i took a photo of the positon t
 */
 
 
+//Intersection varables
+const int leftOfBox = 20; //px
+const int rightOfBox = 300; //px
+const int topOfBox = 20; //px
+const int bottomOfBox = 200; //px
+
 
 //Motor varables
 const int leftMotorPort = 5;  //port number for the left motor
@@ -43,17 +51,17 @@ const bool flipMotors = false;
 const float blackTolarance = 10; // The value by which red green and blue can differ and still be black
 const int maxIntensity = 60; // The maximum value of red + green + blue values to still be black
 
-const int leftOfBox = 20; //px
-const int rightOfBox = 300; //px
-const int topOfBox = 20; //px
-const int bottomOfBox = 120; //px
 
+
+//Dont Change These varables
 //used for camera reading
 const int totalXPixels = 320;
-const int totalYPixesl = 240;
+const int totalYPixels = 240;
 
 char serverAddress[15] = { '1','3','0','.','1','9','5','.','3','.','5','3' }; // server address
 int serverPort = 1024; //server port
+
+
 
 //------------------------- Static Functions ---------------------------
 
@@ -87,18 +95,52 @@ bool isblack(int x, int y) {
 //If it is to check a column
 //returns the mean of the black pixels in the row or col
 int read(int ToRead,bool &present,bool col) {
+
     int count = 0;
     int total = 0;
+    
+    int firstPixel;
+    int finalPixel;
+    int totalPixels;
+    if(col){
+		//cout << "column being checked" << ToRead << endl;
+		firstPixel = topOfBox;
+		finalPixel = bottomOfBox;
+		totalPixels = totalYPixels;
+	}else{
+		//cout << "row being checked" << ToRead << endl;
+		firstPixel = leftOfBox;
+		finalPixel = rightOfBox;
+		totalPixels = totalXPixels;
+	}
+	
 
-    for (int currentXPixel = [col](){if(col){return topOfBox}else{return leftOfBox}}; currentXPixel < [col](){if(col){return bottomOfBox}else{return rightOfBox}}; currentXPixel += 1) {
-        if (isblack(currentXPixel, ToRead)) {
+    for (int currentPixel = firstPixel; currentPixel < finalPixel; currentPixel += 1) {
+		if(col){
+			if (isblack(ToRead, currentPixel)) {
             count +=1;
-            total += currentXPixel;
-        }
+            total += currentPixel;
+			}
+			
+		}else{
+			if (isblack(currentPixel, ToRead)) {
+            count +=1;
+            total += currentPixel;
+			}
+		}
+        
     }
+    
+    
 
     if(count > 0 ){
-		return ((total/count)- ([col](){if(col){return totalYPixesl}else{return totalXPixels}} / 2));
+		if(col){
+			set_pixel((total/count),ToRead , 255, 0, 0);
+		}else{
+			set_pixel(ToRead, (total/count), 255, 0, 0);
+		}
+		
+		return ((total/count)- totalPixels / 2);
 	}else{
 		present = false;
 		return 160;
@@ -178,7 +220,7 @@ void openGate() {
 
 void followLine(long long &prevousTime, double &totalPastIntegral,double &prevousError) {
     //https://www.ctrlaltftc.com/the-pid-controller/the-integral-term
-    take_picture();
+    
 
     //draws the box of where it is checking
     drawBox(leftOfBox, rightOfBox, topOfBox - 1, bottomOfBox + 1);
@@ -190,17 +232,13 @@ void followLine(long long &prevousTime, double &totalPastIntegral,double &prevou
     bool blackpresent = true;
 
     //The distance from the center of the screen to the average black pixel (center is 160)
-    double error = (double)(read(bottomOfBox,blackpresent,false));
+    double error = (double)(read(rowToCheck,blackpresent,false));
 
 	if(blackpresent){
 		
 		//REMOVE
 		cout << "error:" << error << endl;
 		//REMOVE
-
-		//sets the bottom average pixel to red
-		set_pixel(bottomOfBox, error, 255, 0, 0);
-
 
 		double output = kp * error + ki * ((error * timeBewtweenMeasueres) + totalPastIntegral) + kd * ((error - prevousError) / timeBewtweenMeasueres);
 
@@ -232,7 +270,7 @@ void followLine(long long &prevousTime, double &totalPastIntegral,double &prevou
 		}
 		
 		
-		
+	//Reversese if no black pixels are detected
 	}else{
 		int intOutput = 40;
 		if(flipMotors){
@@ -244,21 +282,19 @@ void followLine(long long &prevousTime, double &totalPastIntegral,double &prevou
 			set_motors(rightMotorPort, 65 - (intOutput- 31));
 		}
 	}
-	update_screen();
-	hardware_exchange();
 }
-void intersections() {
-    take_picture();
 
+void intersections() {
     drawBox(leftOfBox-1, rightOfBox+1, topOfBox - 1, bottomOfBox + 1);
 
-    bool forward = false;
-    bool left = false;
-    bool right = false;
+    bool forward = true;
+    bool left = true;
+    bool right = true;
 
     double forwardError = (double)(read(topOfBox,forward,false));
-    double leftError = (double)(read(topOfBox,left,true));
-    double rightError = (double)(read(topOfBox,right,true));
+    double leftError = (double)(read(leftOfBox,left,true));
+    double rightError = (double)(read(rightOfBox,right,true));
+
 
     if(left && leftError < 10 && leftError > -10){
         cout <<"Left turn avalable" << endl;
@@ -268,15 +304,11 @@ void intersections() {
         cout <<" right turn avlable" << endl;
     }
 
+
+
     
-
-
-
-
-
-    update_screen();
-	hardware_exchange();
 }
+
 void pushPole() {
 
 }
@@ -292,8 +324,10 @@ int main() {
     cout << "error:" << err << endl;
     open_screen_stream();
 
+	//testMotors();
+
     //Opens the gate
-    openGate();
+    //openGate();
 
 
 
@@ -301,10 +335,22 @@ int main() {
     long long prevousTime = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
     double totalPastIntegral = 0;
     double prevousError = 0;
-    while (true) {
-        followLine(prevousTime, totalPastIntegral, prevousError);
+    /*while (true) {
+		take_picture();
+		followLine(prevousTime, totalPastIntegral, prevousError);
+		
+		update_screen();
+		hardware_exchange();
         sleep1(20);
     }
+    */
+    while(true){
+		take_picture();
+		intersections();
+		update_screen();
+		hardware_exchange();
+		sleep1(20);
+	}
 
     return 0;
 }
