@@ -1,5 +1,34 @@
+
+--connect to pi--
+ssh pi@10.141.144.129
+password: raspberry
+
+--move to the code--
+cd /Desktop/scrivejack
+
+--open the file in editor--
+nano main.cpp
+
+--save the file in editor--
+(ctrl O)
+
+--exit the file in editor--
+(ctrl X)
+
+--Compile code --
+g++ -o main main.cpp -le101
+
+--exicute code--
+sudo ./main
+
+
+
+
+
 #!\bin\sh
-IP=pi@10.141.98.46
+
+
+IP=pi@10.141.144.129
 FPI="/home/pi/Desktop/scrivejack/main.cpp"
 DPI="/home/pi/Desktop/scrivejack"
 FPC="C:\Users\10jac\OneDrive\Documents\UNI\ENGR 101\AVC\avc\main.cpp"
