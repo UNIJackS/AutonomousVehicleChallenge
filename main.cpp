@@ -13,6 +13,9 @@ using namespace  std;
 
 
 //------- Global Varables ---------
+
+const int cursingSpeed = 55; //the speed the robot moves at 
+
 //Line following varables
 const double kp = 0.055; //the gain of the proption section
 const double ki = 0.0; //the gain of the Integral section
@@ -253,20 +256,22 @@ void followLine(long long &prevousTime, double &totalPastIntegral,double &prevou
 		prevousError = error;
 
 		int intOutput = round(output);
+
+
 		
-		if(intOutput > 10){
-			intOutput = 10;
-		}else if(intOutput < -10){
-			intOutput = -10;
+		if(intOutput > 65-cursingSpeed){
+			intOutput = 65-cursingSpeed;
+		}else if(intOutput < -(65-cursingSpeed)){
+			intOutput = -(65-cursingSpeed);
 		}
 		
 		if(flipMotors){
-			set_motors(leftMotorPort, 65 -((55-intOutput)-31));
-			set_motors(rightMotorPort, 55 +intOutput);
+			set_motors(leftMotorPort, 65 -((cursingSpeed-intOutput)-31));
+			set_motors(rightMotorPort, cursingSpeed +intOutput);
 		}
 		else {
 			set_motors(leftMotorPort, 55 +intOutput);
-			set_motors(rightMotorPort, 65 - ((55-intOutput) - 31));
+			set_motors(rightMotorPort, 65 - ((cursingSpeed-intOutput) - 31));
 		}
 		
 		
@@ -335,7 +340,7 @@ int main() {
     long long prevousTime = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
     double totalPastIntegral = 0;
     double prevousError = 0;
-    /*while (true) {
+    while (true) {
 		take_picture();
 		followLine(prevousTime, totalPastIntegral, prevousError);
 		
@@ -343,7 +348,7 @@ int main() {
 		hardware_exchange();
         sleep1(20);
     }
-    */
+    
     while(true){
 		take_picture();
 		intersections();
