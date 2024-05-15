@@ -1,4 +1,5 @@
 
+
 //refrance page : https://ecs.wgtn.ac.nz/Courses/ENGR101_2024T1/AVC_manuals
 //This doccument uses camelCase 
 
@@ -17,9 +18,9 @@ using namespace  std;
 const int cursingSpeed = 55; //the speed the robot moves at 
 
 //Line following varables
-const double kp = 0.055; //the gain of the proption section
+const double kp = 0.047; //the gain of the proption section
 const double ki = 0.0; //the gain of the Integral section
-const double kd = 0.0; //tthe gain of the derivative section
+const double kd = 3.3; //tthe gain of the derivative section
 
 const int rowToCheck = 120; //The row that the fucntion checks to generate its error
 
@@ -247,7 +248,8 @@ void followLine(long long &prevousTime, double &totalPastIntegral,double &prevou
 
 
 		//REMOVE
-		cout << "output:" << output << endl;
+		cout << "p:" << kp*error << endl;
+                cout << "d:" << kd*((error-prevousError)/timeBewtweenMeasueres) << endl;
 		//REMOVE
 
 		//Sets values for next time
@@ -276,7 +278,7 @@ void followLine(long long &prevousTime, double &totalPastIntegral,double &prevou
 		
 		
 	//Reversese if no black pixels are detected
-	}else{
+	}/*else{
 		int intOutput = 40;
 		if(flipMotors){
 			set_motors(leftMotorPort, 65 -(intOutput-31));
@@ -286,7 +288,7 @@ void followLine(long long &prevousTime, double &totalPastIntegral,double &prevou
 			set_motors(leftMotorPort,intOutput);
 			set_motors(rightMotorPort, 65 - (intOutput- 31));
 		}
-	}
+	}*/
 }
 
 void intersections() {
