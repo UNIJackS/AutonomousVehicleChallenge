@@ -12,38 +12,21 @@
 
 using namespace  std;
 
-
-//------- Global Varables ---------
-
-const int cursingSpeed = 55; //the speed the robot moves at 
+//------------------------- Global Varables ---------------------------
+const int cruisingSpeed = 55; //the speed the robot moves at 
 
 //Line following varables
 const double kp = 0.047; //the gain of the proption section
 const double ki = 0.0; //the gain of the Integral section
 const double kd = 3.3; //tthe gain of the derivative section
 
-const int rowToCheck = 120; //The row that the fucntion checks to generate its error
+const int rowToCheck = 120; //The row that is checked to generate error
 
-/*
-kp values testing
-0.5 worked but excesive reversing due to too low
-0.53 worked but still can go higher
-0.55 worked well everywhere but the final big turn
-0.6 is too far was ossliationg /over turning at some corners
-0.58 worked best
-
-found that the intergtil and derivative where not needed (works so why change)
-
-the camera postion affected this alot as well so i took a photo of the positon that worked best
-*/
-
-
-//Intersection varables
-const int leftOfBox = 20; //px
-const int rightOfBox = 300; //px
-const int topOfBox = 20; //px
+//Read varables
+const int leftOfBox = 20;    //px
+const int rightOfBox = 300;  //px
+const int topOfBox = 20;     //px
 const int bottomOfBox = 200; //px
-
 
 //Motor varables
 const int leftMotorPort = 5;  //port number for the left motor
@@ -55,6 +38,9 @@ const bool flipMotors = false;
 const float blackTolarance = 10; // The value by which red green and blue can differ and still be black
 const int maxIntensity = 60; // The maximum value of red + green + blue values to still be black
 
+//Red detection Varables
+const float redTolarance =1.5;
+const int redThreshold = 1500; // The number of red pixels required for the section to change 
 
 
 //Dont Change These varables
@@ -62,113 +48,12 @@ const int maxIntensity = 60; // The maximum value of red + green + blue values t
 const int totalXPixels = 320;
 const int totalYPixels = 240;
 
-char serverAddress[15] = { '1','3','0','.','1','9','5','.','3','.','5','3' }; // server address
-int serverPort = 1024; //server port
+char serverAddress[15] = { '1','3','0','.','1','9','5','.','3','.','5','3' };  // server address
+int serverPort = 1024;  //server port
+//------------------------- Testing Functions ---------------------------
 
-
-
-//------------------------- Static Functions ---------------------------
-
-//takes an the x and y value of a pixel and checks if its black
-//if it is then it makes it green
-bool isblack(int x, int y) {
-    int red = get_pixel(y, x, 0);
-    int green = get_pixel(y, x, 1);
-    int blue = get_pixel(y, x, 2);
-    int intensity = get_pixel(y, x, 3);
-
-    //checsk if the red green and blue values are within + or - blackTolarance of each other 
-    //and intesity is less than the maximum intesity
-    if ((red - blackTolarance < green || red + blackTolarance > green)
-        && (red - blackTolarance < blue || red + blackTolarance > blue)
-        && (green - blackTolarance < blue || green + blackTolarance > blue)
-        && intensity > maxIntensity) {
-        return false;
-
-    }
-    else {
-        //sets pixels detected as black to green
-        set_pixel(y, x, 0, 255, 0);
-        return true;
-    }
-}
-
-//Takes
-//the row or column number to check
-//A pointer for if there is at least 1 black pixel
-//If it is to check a column
-//returns the mean of the black pixels in the row or col
-int read(int ToRead,bool &present,bool col) {
-
-    int count = 0;
-    int total = 0;
-    
-    int firstPixel;
-    int finalPixel;
-    int totalPixels;
-    if(col){
-		//cout << "column being checked" << ToRead << endl;
-		firstPixel = topOfBox;
-		finalPixel = bottomOfBox;
-		totalPixels = totalYPixels;
-	}else{
-		//cout << "row being checked" << ToRead << endl;
-		firstPixel = leftOfBox;
-		finalPixel = rightOfBox;
-		totalPixels = totalXPixels;
-	}
-	
-
-    for (int currentPixel = firstPixel; currentPixel < finalPixel; currentPixel += 1) {
-		if(col){
-			if (isblack(ToRead, currentPixel)) {
-            count +=1;
-            total += currentPixel;
-			}
-			
-		}else{
-			if (isblack(currentPixel, ToRead)) {
-            count +=1;
-            total += currentPixel;
-			}
-		}
-        
-    }
-    
-    
-
-    if(count > 0 ){
-		if(col){
-			set_pixel((total/count),ToRead , 255, 0, 0);
-		}else{
-			set_pixel(ToRead, (total/count), 255, 0, 0);
-		}
-		
-		return ((total/count)- totalPixels / 2);
-	}else{
-		present = false;
-		return 160;
-	}    
-}
-
-//This takes a left, rght, top and bottom side and draws a box
-void drawBox(int left, int right, int top, int bottom) {
-    //This draws the green left and right lines
-    for (int currentRow = 0; currentRow < (bottom - top); currentRow += 1) {
-        set_pixel(top + currentRow, left, 0, 255, 0);
-        set_pixel(top + currentRow, right, 0, 255, 0);
-    }
-    //This draws the blue top and bottom lines
-    for (int currentCol = 0; currentCol < (right - left); currentCol += 1) {
-        set_pixel(top, left + currentCol, 0, 0, 255);
-        set_pixel(bottom, left + currentCol, 0, 0, 255);
-
-    }
-}
-
-//used to double check motor polarity
+//Check motor polarity
 void testMotors() {
-	
     int pwm = 55;
     cout << "if flipMotors is true" << endl;
     if (true) {
@@ -197,123 +82,343 @@ void testMotors() {
     sleep1(5000);
    
 }
+//------------------------- Static Functions ---------------------------
+
+//Checks if a pixel is black, makes black pixels green
+bool isBlack(int x, int y) {
+    int red = get_pixel(y, x, 0);
+    int green = get_pixel(y, x, 1);
+    int blue = get_pixel(y, x, 2);
+    int intensity = get_pixel(y, x, 3);
+
+    //checsk if the red green and blue values are within + or - blackTolarance of each other 
+    //and intesity is less than the maximum intesity
+    if ((red - blackTolarance < green || red + blackTolarance > green)
+        && (red - blackTolarance < blue || red + blackTolarance > blue)
+        && (green - blackTolarance < blue || green + blackTolarance > blue)
+        && intensity > maxIntensity) {
+        return false;
+
+    }
+    else {
+        //sets pixels detected as black to green
+        set_pixel(y, x, 0, 255, 0);
+        return true;
+    }
+}
+
+
+//checks if a pixel is red, makes red pixels blue
+bool isRed(int x,int y){
+    //cout << "x:" << x << "y:" << y << endl;
+	int red = (int)get_pixel(y,x, 0);
+	int blue = (int)get_pixel(y,x, 1);
+	int green = (int)get_pixel(y,x, 2);
+	
+	int intesity = green+blue;
+	
+	
+	if(red > redTolarance*blue && red >redTolarance*green && intesity>5){
+		set_pixel(y,x,0,0,255); 
+		return(true);
+	}
+	return false;
+}
+
+//Checks if a row or column contains red or black
+//ToRead = the row or column to check
+//present = if at least 1 pixel of the color is detected
+//col = if a column is being read
+//returns the mean of the black pixels in the row or col
+int read(int ToRead,bool &present,bool col) {
+    int count = 0;
+    int total = 0;
+    
+    int firstPixel;
+    int finalPixel;
+    int totalPixels;
+    if(col){
+		//cout << "column being checked" << ToRead << endl;
+		firstPixel = topOfBox;
+		finalPixel = bottomOfBox;
+		totalPixels = totalYPixels;
+	}else{
+		//cout << "row being checked" << ToRead << endl;
+		firstPixel = leftOfBox;
+		finalPixel = rightOfBox;
+		totalPixels = totalXPixels;
+	}
+	
+
+    for (int currentPixel = firstPixel; currentPixel < finalPixel; currentPixel += 1) {
+		if(col){
+			if (isBlack(ToRead, currentPixel)) {
+            count +=1;
+            total += currentPixel;
+			}
+			
+		}else{
+			if (isBlack(currentPixel, ToRead)) {
+            count +=1;
+            total += currentPixel;
+			}
+		}
+        
+    }
+    
+    if(count > 0 ){
+		if(col){
+			set_pixel((total/count),ToRead , 255, 0, 0);
+		}else{
+			set_pixel(ToRead, (total/count), 255, 0, 0);
+		}
+		
+		return ((total/count)- totalPixels / 2);
+	}else{
+		present = false;
+		return 160;
+	}    
+}
+
+//Draws a green or red box to the screen
+void drawBox(int left, int right, int top, int bottom,bool green) {
+    int greenValue =0;
+    int redValue = 255;
+    if(green){
+        greenValue = 255;
+        redValue = 0;
+    }
+    //This draws the yellow left and right lines
+    for (int currentRow = top; currentRow < bottom; currentRow += 1) {
+        set_pixel(currentRow, left, redValue, greenValue, 0);
+        set_pixel(currentRow, right, redValue, greenValue, 0);
+    }
+    //This draws the blue top and bottom lines in yellow
+    for (int currentCol = left; currentCol < right; currentCol += 1) {
+        set_pixel(top, currentCol, redValue, greenValue, 0);
+        set_pixel(bottom, currentCol, redValue, greenValue, 0);
+
+    }
+}
+
+//Checks if a box contains over a threshold of a colour of pixel
+bool checkBox(bool checkBlack,int threshhold,int left,int width,int top, int height ){
+    int total = 0;
+    for(int currectXPixel = left; currectXPixel < left+width; currectXPixel +=1){
+        for(int currectYPixel = top; currectYPixel < top +height; currectYPixel +=1){
+            if(checkBlack){
+                if(isBlack(currectXPixel,currectYPixel)){
+                    total+=1;
+                }
+            }else{
+                if(isRed(currectXPixel,currectYPixel)){
+                    total+=1;
+                }
+            }
+        }
+    }
+    
+    drawBox(left, left+width, top , top+height,total > threshhold);
+    return (total > threshhold);
+}
+    
+
+//Drives the left and right motors
+void driveMotors(int leftOutput, int rightOutput,int diffarental){
+    //checks if the diffarentla is too large
+	if(diffarental > 65 - cruisingSpeed){
+		diffarental = 65 - cruisingSpeed;
+	}else if(diffarental < -(65 - cruisingSpeed)){
+		diffarental = -(65 - cruisingSpeed);
+	}
+	//flips the motors and applys the diffarental the opposite way
+    if(flipMotors){
+        set_motors(leftMotorPort, 65 -((leftOutput-diffarental)-31));
+        set_motors(rightMotorPort, (rightOutput+diffarental));
+    }
+    else {
+        set_motors(leftMotorPort, (leftOutput+diffarental));
+        set_motors(rightMotorPort, 65 - ((rightOutput-diffarental)- 31));
+    }
+}
+//Initiates a left turn
+void turnLeft(){
+    cout << "Left turn called" << endl;
+    bool left = true;
+    //drives forward untill no more pixels are detected in left side
+    while(left){
+        take_picture();
+        left = checkBox(true,300,70,20,110,20);
+
+        driveMotors(55,55,0);
+
+        hardware_exchange();
+        update_screen();
+        sleep1(20);
+    }
+    cout << "Left no longer detected" << endl;
+
+    long long timeTurnStarted = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
+
+    bool forward = true;
+    while(forward){
+        take_picture();
+
+        //Only starts checking the box after 500 milli seconds
+        if(std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count() - timeTurnStarted > 400){
+            cout << "Searching for black" << endl;
+            forward = !checkBox(true,300,150,20,50,20);
+        }else{
+            cout << "not Searching for black" << endl;
+        }
+        
+        driveMotors(48,55,0);
+
+        hardware_exchange();
+        update_screen();
+        sleep1(20);
+    }
+
+    cout << "left turn finished" << endl;
+
+}
+//Initiates a right turn
+void turnRight(){
+    cout << "Right turn called" << endl;
+    bool right = true;
+    //drives forward untill no more pixels are detected in left side
+    while(right){
+        take_picture();
+        right = checkBox(true,300,230,20,110,20);
+
+        driveMotors(55,55,0);
+
+        hardware_exchange();
+        update_screen();
+        sleep1(20);
+    }
+    cout << "Right no longer detected" << endl;
+
+    long long timeTurnStarted = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
+
+    bool forward = true;
+    while(forward){
+        take_picture();
+
+        //Only starts checking the box after 500 milli seconds
+        if(std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count() - timeTurnStarted > 400){
+            cout << "Searching for black" << endl;
+            forward = !checkBox(true,300,150,20,50,20);
+        }else{
+            cout << "not Searching for black" << endl;
+        }
+        
+        driveMotors(55,48,0);
+
+        hardware_exchange();
+        update_screen();
+        sleep1(20);
+    }
+
+    cout << "Right turn finished" << endl;
+
+}
+//Turns the robot back around
+void turnAround(){
+    int threshHold = 300; //20px * 20px = 400 total max
+    //turns the robot untill the top black pixel is in the center 
+    bool forward = true;
+    while(forward){
+        take_picture();
+
+        forward = !checkBox(true,threshHold,150,20,50,20);
+
+        driveMotors(55,55,7);
+
+        hardware_exchange();
+        update_screen();
+        sleep1(20);
+    }
+}
 
 
 
+//------------------------- Dynamic Functions ---------------------------
 
+//Checks if the number of red pixels in the image is above the red threshold
+bool sectionChange(){
+    return(!checkBox(false,redThreshold,0,totalXPixels-1,0,totalYPixels-1));
+} 
 
-//------- Dynamic Functions ------``---
 void openGate() {
     //attempts to connect to gate
     int connected = connect_to_server(serverAddress, serverPort);
     if (connected != 0) {
         cout << "error connectiong to gate, code:" << connected << endl;
     }
-
     //sends request to server for password
     char pleaseMessage[] = { 'P','l','e','a','s','e' };
     send_to_server(pleaseMessage);
-
     //reccives password from server
     char password[24];
     receive_from_server(password);
     cout << "password:" << password << endl;
-
+    //Sends password back to server
     send_to_server(password);
 }
 
 void followLine(long long &prevousTime, double &totalPastIntegral,double &prevousError) {
     //https://www.ctrlaltftc.com/the-pid-controller/the-integral-term
-    
-
-    //draws the box of where it is checking
-    drawBox(leftOfBox, rightOfBox, topOfBox - 1, bottomOfBox + 1);
-
     //returns the time in milliseconds since the epoch
     long long currentTime = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
     long long timeBewtweenMeasueres = currentTime - prevousTime;
 
     bool blackpresent = true;
-
     //The distance from the center of the screen to the average black pixel (center is 160)
     double error = (double)(read(rowToCheck,blackpresent,false));
 
 	if(blackpresent){
-		
-		//REMOVE
-		cout << "error:" << error << endl;
-		//REMOVE
 
 		double output = kp * error + ki * ((error * timeBewtweenMeasueres) + totalPastIntegral) + kd * ((error - prevousError) / timeBewtweenMeasueres);
-
-
-		//REMOVE
-		cout << "p:" << kp*error << endl;
-                cout << "d:" << kd*((error-prevousError)/timeBewtweenMeasueres) << endl;
-		//REMOVE
-
 		//Sets values for next time
 		totalPastIntegral += error * totalPastIntegral;
 		prevousTime = currentTime;
 		prevousError = error;
-
-		int intOutput = round(output);
-
-
 		
-		if(intOutput > 65-cursingSpeed){
-			intOutput = 65-cursingSpeed;
-		}else if(intOutput < -(65-cursingSpeed)){
-			intOutput = -(65-cursingSpeed);
-		}
-		
-		if(flipMotors){
-			set_motors(leftMotorPort, 65 -((cursingSpeed-intOutput)-31));
-			set_motors(rightMotorPort, cursingSpeed +intOutput);
-		}
-		else {
-			set_motors(leftMotorPort, 55 +intOutput);
-			set_motors(rightMotorPort, 65 - ((cursingSpeed-intOutput) - 31));
-		}
-		
-		
-	//Reversese if no black pixels are detected
-	}/*else{
-		int intOutput = 40;
-		if(flipMotors){
-			set_motors(leftMotorPort, 65 -(intOutput-31));
-			set_motors(rightMotorPort, intOutput);
-		}
-		else {
-			set_motors(leftMotorPort,intOutput);
-			set_motors(rightMotorPort, 65 - (intOutput- 31));
-		}
-	}*/
+        driveMotors(cruisingSpeed,cruisingSpeed,round(output));
+	}
 }
 
-void intersections() {
-    drawBox(leftOfBox-1, rightOfBox+1, topOfBox - 1, bottomOfBox + 1);
+void intersections(long long &turnsAvalableTime) {
+    bool left = checkBox(true,300,70,20,110,20);
+    bool right = checkBox(true,300,230,20,110,20);
 
-    bool forward = true;
-    bool left = true;
-    bool right = true;
+    bool forward = checkBox(true,300,150,20,50,20);
+    bool backward = checkBox(true,300,150,20,170,20);
 
-    double forwardError = (double)(read(topOfBox,forward,false));
-    double leftError = (double)(read(leftOfBox,left,true));
-    double rightError = (double)(read(rightOfBox,right,true));
+    long long currentTime = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
 
-
-    if(left && leftError < 10 && leftError > -10){
+    if(left && currentTime-timeSinceLastTurn > 500){
+        timeSinceLastTurn = currentTime;
         cout <<"Left turn avalable" << endl;
-    }
-
-    if(right && rightError < 10 && rightError > -10 ){
+        turnLeft();
+    }else if(right && currentTime-timeSinceLastTurn > 500){
+        timeSinceLastTurn = currentTime;
         cout <<" right turn avlable" << endl;
+        turnRight();
+    }
+    
+    if(right || left || forward){
+        turnsAvalableTime = currentTime;
     }
 
+    if(currentTime-turnsAvalableTime > 3000 ){
+        turnsAvalableTime = currentTime;
+        
+        cout <<"no turns avalable for 3 seconds" << endl;
+        turnAround();
+    }
 
-
-    
 }
 
 void pushPole() {
@@ -323,41 +428,53 @@ void pushPole() {
 
 //------- Main ---------
 int main() {
-	set_motors(1, 48);
-	set_motors(3, 48);
-	set_motors(5, 48);
-
+    set_motors(1, 48);
+    set_motors(3, 48);
+    set_motors(5, 48);
     int err = init(0);
     cout << "error:" << err << endl;
     open_screen_stream();
-
-	//testMotors();
-
     //Opens the gate
     //openGate();
+    cout << "Gate Opened, Following line" << endl;
 
-
-
-
+    //flips the camera up
+    set_motors(cameraMotorPort, 50);
+    hardware_exchange();
+    
     long long prevousTime = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
     double totalPastIntegral = 0;
     double prevousError = 0;
-    while (true) {
+    //follows the line
+    bool change = true;
+    while(change){
 		take_picture();
+
 		followLine(prevousTime, totalPastIntegral, prevousError);
-		
-		update_screen();
-		hardware_exchange();
+        change = sectionChange();
+
+        hardware_exchange();
+        update_screen();
         sleep1(20);
     }
+    cout << "First section change detected" << endl;
     
-    while(true){
+    sleep1(1500);
+
+    cout << "Intersection code starting" << endl;
+    long long timeSinceLastTurn = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
+    change = true;
+    while(change){
 		take_picture();
-		intersections();
-		update_screen();
-		hardware_exchange();
-		sleep1(20);
+
+        followLine(prevousTime, totalPastIntegral, prevousError);
+		intersections(timeSinceLastTurn);
+
+        hardware_exchange();
+        update_screen();
+        sleep1(20);
 	}
+    cout << "Second section change detected" << endl;
 
     return 0;
 }
