@@ -1,10 +1,10 @@
 
 --connect to pi--
-ssh pi@10.141.144.129
+ssh pi@10.141.217.251
 password: raspberry
 
 --move to the code--
-cd /Desktop/scrivejack
+cd Desktop/scrivejack
 
 --open the file in editor--
 nano main.cpp
