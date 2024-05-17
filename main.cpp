@@ -13,7 +13,7 @@
 using namespace  std;
 
 //------------------------- Global Varables ---------------------------
-const int cruisingSpeed = 55; //the speed the robot moves at 
+int cruisingSpeed = 55; //the speed the robot moves at 
 
 //Line following varables
 const double kp = 0.047; //the gain of the proption section
@@ -40,7 +40,7 @@ const int maxIntensity = 60; // The maximum value of red + green + blue values t
 
 //Red detection Varables
 const float redTolarance =1.5;
-const int redThreshold = 1500; // The number of red pixels required for the section to change 
+const int redThreshold = 2000; // The number of red pixels required for the section to change 
 
 
 //Dont Change These varables
@@ -82,6 +82,10 @@ void testMotors() {
     sleep1(5000);
    
 }
+
+
+
+
 //------------------------- Static Functions ---------------------------
 
 //Checks if a pixel is black, makes black pixels green
@@ -107,6 +111,52 @@ bool isBlack(int x, int y) {
     }
 }
 
+void printScreen(){
+    int pixelsPerChunk = 5;
+
+    cout << "totalXPixels" << totalXPixels << endl;
+    cout << "totalYPixels" << totalYPixels << endl;
+    cout << "pixelsPerChunk" << pixelsPerChunk << endl;
+    cout << "number of x chunks" << totalXPixels/pixelsPerChunk << endl;
+    cout << "number of y chunks" << totalYPixels/pixelsPerChunk << endl;
+    
+    for(int currentXChunk = 0; currentXChunk < totalXPixels/pixelsPerChunk; currentXChunk +=1){
+        for(int currentYChunk = 0; currentYChunk < totalYPixels/pixelsPerChunk; currentYChunk +=1){
+            //cout << currentXChunk << "," <<currentYChunk <<" ";
+            int blackPixelsInChunk = 0;
+            int nonBlackPixelsInChunk = 0;
+            for(int currentXPixel = currentXChunk*pixelsPerChunk; currentXPixel < pixelsPerChunk + currentXChunk*pixelsPerChunk; currentXPixel +=1){
+                for(int currentYPixel = currentYChunk*pixelsPerChunk; currentYPixel < pixelsPerChunk + currentYChunk*pixelsPerChunk; currentYPixel +=1){
+                    //cout << currentXPixel << currentYPixel << endl;
+                    if(isBlack(currentXPixel,currentYPixel)){
+                        blackPixelsInChunk +=1;
+                    }else{
+                        nonBlackPixelsInChunk +=1;
+                    }
+
+                }
+            }
+            
+            
+            if(blackPixelsInChunk >= nonBlackPixelsInChunk){
+                cout << "1";
+            }else{
+                cout << "0";
+            }
+            
+        }
+        cout << endl;
+    }
+     cout << endl<< endl<< endl<< endl<< endl;
+
+     set_motors(leftMotorPort, 48);
+     set_motors(rightMotorPort, 48);
+     hardware_exchange();
+     
+     int input =0;
+     cin >> input;
+    
+}
 
 //checks if a pixel is red, makes red pixels blue
 bool isRed(int x,int y){
@@ -248,7 +298,7 @@ void turnLeft(){
     //drives forward untill no more pixels are detected in left side
     while(left){
         take_picture();
-        left = checkBox(true,300,70,20,110,20);
+        left = checkBox(true,300,70,20,110,100);
 
         driveMotors(55,55,0);
 
@@ -267,19 +317,25 @@ void turnLeft(){
         //Only starts checking the box after 500 milli seconds
         if(std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count() - timeTurnStarted > 400){
             cout << "Searching for black" << endl;
-            forward = !checkBox(true,300,150,20,50,20);
+            forward = !checkBox(true,300,70,20,50,20);
         }else{
             cout << "not Searching for black" << endl;
         }
         
-        driveMotors(48,55,0);
+        driveMotors(42,52,0);
 
         hardware_exchange();
         update_screen();
         sleep1(20);
     }
 
+    //printScreen();
     cout << "left turn finished" << endl;
+
+    
+
+
+
 
 }
 //Initiates a right turn
@@ -289,7 +345,7 @@ void turnRight(){
     //drives forward untill no more pixels are detected in left side
     while(right){
         take_picture();
-        right = checkBox(true,300,230,20,110,20);
+        right = checkBox(true,300,230,20,110,100);
 
         driveMotors(55,55,0);
 
@@ -308,18 +364,17 @@ void turnRight(){
         //Only starts checking the box after 500 milli seconds
         if(std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count() - timeTurnStarted > 400){
             cout << "Searching for black" << endl;
-            forward = !checkBox(true,300,150,20,50,20);
+            forward = !checkBox(true,300,230,20,50,20);
         }else{
             cout << "not Searching for black" << endl;
         }
         
-        driveMotors(55,48,0);
+        driveMotors(52,44,0);
 
         hardware_exchange();
         update_screen();
         sleep1(20);
     }
-
     cout << "Right turn finished" << endl;
 
 }
@@ -333,7 +388,7 @@ void turnAround(){
 
         forward = !checkBox(true,threshHold,150,20,50,20);
 
-        driveMotors(55,55,7);
+        driveMotors(55,41,0);
 
         hardware_exchange();
         update_screen();
@@ -389,35 +444,45 @@ void followLine(long long &prevousTime, double &totalPastIntegral,double &prevou
 	}
 }
 
-void intersections(long long &turnsAvalableTime) {
-    bool left = checkBox(true,300,70,20,110,20);
-    bool right = checkBox(true,300,230,20,110,20);
+void intersections(long long &timeOfLastTurn, long long &lastTimeAnyDetected) {
+    bool left = checkBox(true,300,50,20,110,20);
+    bool right = checkBox(true,300,250,20,110,20);
 
     bool forward = checkBox(true,300,150,20,50,20);
-    bool backward = checkBox(true,300,150,20,170,20);
+    bool back = checkBox(true,300,150,20,170,20);
 
     long long currentTime = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
 
-    if(left && currentTime-timeSinceLastTurn > 500){
-        timeSinceLastTurn = currentTime;
-        cout <<"Left turn avalable" << endl;
-        turnLeft();
-    }else if(right && currentTime-timeSinceLastTurn > 500){
-        timeSinceLastTurn = currentTime;
-        cout <<" right turn avlable" << endl;
-        turnRight();
-    }
-    
-    if(right || left || forward){
-        turnsAvalableTime = currentTime;
+    if (currentTime-timeOfLastTurn < 5000){
+        cruisingSpeed = 49;
+    }else{
+        cruisingSpeed = 55;
+        if(left){
+            timeOfLastTurn = currentTime;
+            cout <<"Left turn avalable" << endl;
+            turnLeft();
+        }else if(right){
+            timeOfLastTurn = currentTime;
+            cout <<" right turn avlable" << endl;
+            turnRight();
+        }
+
     }
 
-    if(currentTime-turnsAvalableTime > 3000 ){
-        turnsAvalableTime = currentTime;
+    
+    if(right || left || forward || back){
+        lastTimeAnyDetected = currentTime;
+        cout << "something detectd" << endl;
+    }
+
+    if(currentTime-lastTimeAnyDetected >1000){
+        lastTimeAnyDetected = currentTime;
+        timeOfLastTurn = currentTime;
         
-        cout <<"no turns avalable for 3 seconds" << endl;
+        cout <<"no turns avalable for 500  millisecond" << endl;
         turnAround();
     }
+    
 
 }
 
@@ -447,7 +512,7 @@ int main() {
     double prevousError = 0;
     //follows the line
     bool change = true;
-    while(change){
+    /*while(change){
 		take_picture();
 
 		followLine(prevousTime, totalPastIntegral, prevousError);
@@ -459,16 +524,21 @@ int main() {
     }
     cout << "First section change detected" << endl;
     
-    sleep1(1500);
-
+    sleep1(1000);
+    */
+    
     cout << "Intersection code starting" << endl;
-    long long timeSinceLastTurn = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
+    long long timeOfLastTurn = 0;
+    long long lastTimeAnyDetected = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
     change = true;
     while(change){
 		take_picture();
 
+
         followLine(prevousTime, totalPastIntegral, prevousError);
-		intersections(timeSinceLastTurn);
+		intersections(timeOfLastTurn,lastTimeAnyDetected);
+
+        cout << cruisingSpeed << endl;
 
         hardware_exchange();
         update_screen();
