@@ -48,6 +48,8 @@ const int redThreshold = 2000; // The number of red pixels required for the sect
 const int totalXPixels = 320;
 const int totalYPixels = 240;
 
+char turnOrder = {"R","R","L","L","R","L","R"};
+
 char serverAddress[15] = { '1','3','0','.','1','9','5','.','3','.','5','3' };  // server address
 int serverPort = 1024;  //server port
 //------------------------- Testing Functions ---------------------------
@@ -180,49 +182,26 @@ bool isRed(int x,int y){
 //present = if at least 1 pixel of the color is detected
 //col = if a column is being read
 //returns the mean of the black pixels in the row or col
-int read(int ToRead,bool &present,bool col) {
+int read(int ToRead,bool &present) {
+
+	int firstPixel = leftOfBox;
+	int finalPixel = rightOfBox;
+	int totalPixels = totalXPixels;
+
     int count = 0;
     int total = 0;
-    
-    int firstPixel;
-    int finalPixel;
-    int totalPixels;
-    if(col){
-		//cout << "column being checked" << ToRead << endl;
-		firstPixel = topOfBox;
-		finalPixel = bottomOfBox;
-		totalPixels = totalYPixels;
-	}else{
-		//cout << "row being checked" << ToRead << endl;
-		firstPixel = leftOfBox;
-		finalPixel = rightOfBox;
-		totalPixels = totalXPixels;
-	}
-	
 
     for (int currentPixel = firstPixel; currentPixel < finalPixel; currentPixel += 1) {
-		if(col){
-			if (isBlack(ToRead, currentPixel)) {
+        //cout << "x:" <<  currentPixel << "y:" << ToRead << endl;
+        if (isBlack(currentPixel,ToRead)) {
             count +=1;
             total += currentPixel;
-			}
-			
-		}else{
-			if (isBlack(currentPixel, ToRead)) {
-            count +=1;
-            total += currentPixel;
-			}
-		}
-        
+        }
+
     }
     
     if(count > 0 ){
-		if(col){
-			set_pixel((total/count),ToRead , 255, 0, 0);
-		}else{
-			set_pixel(ToRead, (total/count), 255, 0, 0);
-		}
-		
+        //set_pixel(ToRead, (total/count), 255, 0, 0);
 		return ((total/count)- totalPixels / 2);
 	}else{
 		present = false;
@@ -322,7 +301,7 @@ void turnLeft(){
             cout << "not Searching for black" << endl;
         }
         
-        driveMotors(42,52,0);
+        driveMotors(48,48,-5);
 
         hardware_exchange();
         update_screen();
@@ -369,7 +348,7 @@ void turnRight(){
             cout << "not Searching for black" << endl;
         }
         
-        driveMotors(52,44,0);
+        driveMotors(48,48,5);
 
         hardware_exchange();
         update_screen();
@@ -380,13 +359,12 @@ void turnRight(){
 }
 //Turns the robot back around
 void turnAround(){
-    int threshHold = 300; //20px * 20px = 400 total max
     //turns the robot untill the top black pixel is in the center 
     bool forward = true;
     while(forward){
         take_picture();
 
-        forward = !checkBox(true,threshHold,150,20,50,20);
+        forward = !checkBox(true,300,150,20,50,20);
 
         driveMotors(55,41,0);
 
@@ -430,7 +408,7 @@ void followLine(long long &prevousTime, double &totalPastIntegral,double &prevou
 
     bool blackpresent = true;
     //The distance from the center of the screen to the average black pixel (center is 160)
-    double error = (double)(read(rowToCheck,blackpresent,false));
+    double error = (double)(read(rowToCheck,blackpresent));
 
 	if(blackpresent){
 
@@ -453,6 +431,8 @@ void intersections(long long &timeOfLastTurn, long long &lastTimeAnyDetected) {
 
     long long currentTime = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
 
+    
+
     if (currentTime-timeOfLastTurn < 5000){
         cruisingSpeed = 49;
     }else{
@@ -470,18 +450,23 @@ void intersections(long long &timeOfLastTurn, long long &lastTimeAnyDetected) {
     }
 
     
-    if(right || left || forward || back){
+    bool blackpresent = true;
+
+    (double)(read(200,blackpresent));
+
+    if(blackpresent){
         lastTimeAnyDetected = currentTime;
         cout << "something detectd" << endl;
     }
 
-    if(currentTime-lastTimeAnyDetected >1000){
+    if(currentTime-lastTimeAnyDetected >500){
         lastTimeAnyDetected = currentTime;
         timeOfLastTurn = currentTime;
         
-        cout <<"no turns avalable for 500  millisecond" << endl;
+        cout <<"blackpresent for 500  millisecond" << endl;
         turnAround();
     }
+    
     
 
 }
