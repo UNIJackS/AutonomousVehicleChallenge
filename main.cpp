@@ -177,12 +177,48 @@ bool isRed(int x,int y){
 	return false;
 }
 
+//checks if a pixel is red, makes red pixels blue
+bool isGreen(int x,int y){
+    //cout << "x:" << x << "y:" << y << endl;
+	int red = (int)get_pixel(y,x, 0);
+	int blue = (int)get_pixel(y,x, 1);
+	int green = (int)get_pixel(y,x, 2);
+	
+	int intesity = green+blue;
+	
+	
+	if(red > redTolarance*blue && red >redTolarance*green && intesity>5){
+		set_pixel(y,x,0,0,255); 
+		return(true);
+	}
+	return false;
+}
+
+
+//checks if a pixel is red, makes red pixels blue
+bool isBlue(int x,int y){
+    //cout << "x:" << x << "y:" << y << endl;
+	int red = (int)get_pixel(y,x, 0);
+	int blue = (int)get_pixel(y,x, 1);
+	int green = (int)get_pixel(y,x, 2);
+	
+	int intesity = green+blue;
+	
+	
+	if(red > redTolarance*blue && red >redTolarance*green && intesity>5){
+		set_pixel(y,x,0,0,255); 
+		return(true);
+	}
+	return false;
+}
+
 //Checks if a row or column contains red or black
 //ToRead = the row or column to check
 //present = if at least 1 pixel of the color is detected
 //col = if a column is being read
+//colour == the colour to check (K,R,G or B)
 //returns the mean of the black pixels in the row or col
-int read(int ToRead,bool &present) {
+int read(int ToRead,bool &present, char colour) {
 
 	int firstPixel = leftOfBox;
 	int finalPixel = rightOfBox;
@@ -192,11 +228,31 @@ int read(int ToRead,bool &present) {
     int total = 0;
 
     for (int currentPixel = firstPixel; currentPixel < finalPixel; currentPixel += 1) {
-        //cout << "x:" <<  currentPixel << "y:" << ToRead << endl;
-        if (isBlack(currentPixel,ToRead)) {
-            count +=1;
-            total += currentPixel;
+        if(colour == 'K'){
+            if (isBlack(currentPixel,ToRead)) {
+                count +=1;
+                total += currentPixel;
+            }
         }
+        if(colour == 'R'){
+            if (isRed(currentPixel,ToRead)) {
+                count +=1;
+                total += currentPixel;
+            }
+        }
+        if(colour == 'G'){
+            if (isGreen(currentPixel,ToRead)) {
+                count +=1;
+                total += currentPixel;
+            }
+        }
+        if(colour == 'B'){
+            if (isBlue(currentPixel,ToRead)) {
+                count +=1;
+                total += currentPixel;
+            }
+        }
+        
 
     }
     
@@ -311,12 +367,8 @@ void turnLeft(){
     //printScreen();
     cout << "left turn finished" << endl;
 
-    
-
-
-
-
 }
+
 //Initiates a right turn
 void turnRight(){
     cout << "Right turn called" << endl;
@@ -357,22 +409,6 @@ void turnRight(){
     cout << "Right turn finished" << endl;
 
 }
-//Turns the robot back around
-void turnAround(){
-    //turns the robot untill the top black pixel is in the center 
-    bool forward = true;
-    while(forward){
-        take_picture();
-
-        forward = !checkBox(true,300,150,20,50,20);
-
-        driveMotors(55,41,0);
-
-        hardware_exchange();
-        update_screen();
-        sleep1(20);
-    }
-}
 
 
 
@@ -380,7 +416,12 @@ void turnAround(){
 
 //Checks if the number of red pixels in the image is above the red threshold
 bool sectionChange(){
-    return(!checkBox(false,redThreshold,0,totalXPixels-1,0,totalYPixels-1));
+    if(!checkBox(false,redThreshold,0,totalXPixels-1,0,totalYPixels-1)){
+        return 0;
+    }else{
+        cout << "Section change tripped" << endl;
+        return 1;
+    }
 } 
 
 void openGate() {
@@ -404,15 +445,13 @@ void followLine(long long &prevousTime, double &totalPastIntegral,double &prevou
     //https://www.ctrlaltftc.com/the-pid-controller/the-integral-term
     //returns the time in milliseconds since the epoch
     long long currentTime = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
-    long long timeBewtweenMeasueres = currentTime - prevousTime;
 
     bool blackpresent = true;
     //The distance from the center of the screen to the average black pixel (center is 160)
-    double error = (double)(read(rowToCheck,blackpresent));
+    double error = (double)(read(rowToCheck,blackpresent,'K'));
 
 	if(blackpresent){
-
-		double output = kp * error + ki * ((error * timeBewtweenMeasueres) + totalPastIntegral) + kd * ((error - prevousError) / timeBewtweenMeasueres);
+		double output = kp * error + ki * ((error * (currentTime - prevousTime)) + totalPastIntegral) + kd * ((error - prevousError) / (currentTime - prevousTime));
 		//Sets values for next time
 		totalPastIntegral += error * totalPastIntegral;
 		prevousTime = currentTime;
@@ -422,53 +461,55 @@ void followLine(long long &prevousTime, double &totalPastIntegral,double &prevou
 	}
 }
 
-void intersections(long long &timeOfLastTurn, long long &lastTimeAnyDetected,int &turnNumber) {
-    bool left = checkBox(true,300,50,20,110,20);
-    bool right = checkBox(true,300,250,20,110,20);
-
-    bool forward = checkBox(true,300,150,20,50,20);
-    bool back = checkBox(true,300,150,20,170,20);
-
+void intersections(long long &timeOfLastTurn,int &turnNumber) {
     long long currentTime = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
 
-    cout << "time since last turn" << currentTime-timeOfLastTurn << endl;
-
     if (currentTime-timeOfLastTurn < 4000){
+        //Changes cursing speed for 4 seconds after a turn for auto correction
         cruisingSpeed = 49;
     }else{
         cruisingSpeed = 55;
-
-        if(left && turnOrder[turnNumber] == 'L' && currentTime-timeOfLastTurn > 4000){
+        if(checkBox(true,300,50,20,110,20) && turnOrder[turnNumber] == 'L'){
             turnNumber+=1;
-            cout <<"Left turn avalable" << endl;
             turnLeft();
             timeOfLastTurn = currentTime;
-        }
-
-        if(right && turnOrder[turnNumber] == 'R' && currentTime-timeOfLastTurn > 4000){
+        }else if(checkBox(true,300,250,20,110,20) && turnOrder[turnNumber] == 'R'){
             turnNumber +=1;
-            cout <<" right turn avlable" << endl;
             turnRight();
             timeOfLastTurn = currentTime;
         }
 
     }
-
-    
-    
-
 }
 
 void pushPole() {
+
+
+    //detect red pole 
+
+    double error = (double)(read(rowToCheck,blackpresent,'R'));
+
+
+
+
+
+    //detect green pole
+
+
+
+    //detect blue pole 
+
+
+
+
+    //detect ball 
 
 }
 
 
 //------- Main ---------
 int main() {
-    set_motors(1, 48);
-    set_motors(3, 48);
-    set_motors(5, 48);
+
     int err = init(0);
     cout << "error:" << err << endl;
     open_screen_stream();
@@ -479,46 +520,46 @@ int main() {
     //flips the camera up
     set_motors(cameraMotorPort, 50);
     hardware_exchange();
-    
+
+
+    //Varables for following line
     long long prevousTime = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
     double totalPastIntegral = 0;
     double prevousError = 0;
+
+    //Varables for intersections
+    int turnNumber = 0;
+    long long timeOfLastTurn = 0;
+
     //follows the line
-    bool change = true;
-    /*while(change){
+    int sectionNumber = 1;
+    while(true){
 		take_picture();
 
-		followLine(prevousTime, totalPastIntegral, prevousError);
-        change = sectionChange();
+        switch (sectionNumber)
+        {
+        case 1
+            followLine(prevousTime, totalPastIntegral, prevousError);
+            sectionNumber += sectionChange();
+            break;
+        
+        case 2
+            followLine(prevousTime, totalPastIntegral, prevousError);
+		    intersections(timeOfLastTurn,turnNumber);
+            sectionNumber += sectionChange();
+            break;
+
+        case 3
+            set_motors(cameraMotorPort, 31);
+            pushPole();
+            break;
+
+        }
 
         hardware_exchange();
         update_screen();
         sleep1(20);
     }
-    cout << "First section change detected" << endl;
-    
-    sleep1(1000);*/
-    
-    
-    cout << "Intersection code starting" << endl;
-    int turnNumber = 0;
-    long long timeOfLastTurn = 0;
-    long long lastTimeAnyDetected = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
-    change = true;
-    while(change){
-		take_picture();
-
-
-        followLine(prevousTime, totalPastIntegral, prevousError);
-		intersections(timeOfLastTurn,lastTimeAnyDetected,turnNumber);
-
-        cout << cruisingSpeed << endl;
-
-        hardware_exchange();
-        update_screen();
-        sleep1(20);
-	}
-    cout << "Second section change detected" << endl;
 
     return 0;
 }
