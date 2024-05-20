@@ -48,7 +48,7 @@ const int redThreshold = 2000; // The number of red pixels required for the sect
 const int totalXPixels = 320;
 const int totalYPixels = 240;
 
-char turnOrder = {"R","R","L","L","R","L","R"};
+char turnOrder[] = {'R','R','L','L','R','L','R'};
 
 char serverAddress[15] = { '1','3','0','.','1','9','5','.','3','.','5','3' };  // server address
 int serverPort = 1024;  //server port
@@ -422,7 +422,7 @@ void followLine(long long &prevousTime, double &totalPastIntegral,double &prevou
 	}
 }
 
-void intersections(long long &timeOfLastTurn, long long &lastTimeAnyDetected) {
+void intersections(long long &timeOfLastTurn, long long &lastTimeAnyDetected,int &turnNumber) {
     bool left = checkBox(true,300,50,20,110,20);
     bool right = checkBox(true,300,250,20,110,20);
 
@@ -431,41 +431,29 @@ void intersections(long long &timeOfLastTurn, long long &lastTimeAnyDetected) {
 
     long long currentTime = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
 
-    
+    cout << "time since last turn" << currentTime-timeOfLastTurn << endl;
 
-    if (currentTime-timeOfLastTurn < 5000){
+    if (currentTime-timeOfLastTurn < 4000){
         cruisingSpeed = 49;
     }else{
         cruisingSpeed = 55;
-        if(left){
-            timeOfLastTurn = currentTime;
+
+        if(left && turnOrder[turnNumber] == 'L' && currentTime-timeOfLastTurn > 4000){
+            turnNumber+=1;
             cout <<"Left turn avalable" << endl;
             turnLeft();
-        }else if(right){
             timeOfLastTurn = currentTime;
+        }
+
+        if(right && turnOrder[turnNumber] == 'R' && currentTime-timeOfLastTurn > 4000){
+            turnNumber +=1;
             cout <<" right turn avlable" << endl;
             turnRight();
+            timeOfLastTurn = currentTime;
         }
 
     }
 
-    
-    bool blackpresent = true;
-
-    (double)(read(200,blackpresent));
-
-    if(blackpresent){
-        lastTimeAnyDetected = currentTime;
-        cout << "something detectd" << endl;
-    }
-
-    if(currentTime-lastTimeAnyDetected >500){
-        lastTimeAnyDetected = currentTime;
-        timeOfLastTurn = currentTime;
-        
-        cout <<"blackpresent for 500  millisecond" << endl;
-        turnAround();
-    }
     
     
 
@@ -509,10 +497,11 @@ int main() {
     }
     cout << "First section change detected" << endl;
     
-    sleep1(1000);
-    */
+    sleep1(1000);*/
+    
     
     cout << "Intersection code starting" << endl;
+    int turnNumber = 0;
     long long timeOfLastTurn = 0;
     long long lastTimeAnyDetected = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
     change = true;
@@ -521,7 +510,7 @@ int main() {
 
 
         followLine(prevousTime, totalPastIntegral, prevousError);
-		intersections(timeOfLastTurn,lastTimeAnyDetected);
+		intersections(timeOfLastTurn,lastTimeAnyDetected,turnNumber);
 
         cout << cruisingSpeed << endl;
 
