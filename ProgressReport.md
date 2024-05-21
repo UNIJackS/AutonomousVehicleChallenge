@@ -18,3 +18,6 @@ Write short analysis of how Project is going:
 - What are bottlenecks, what is slowing the development
 - Team recommendation on how to advance the Project
 Make sure that all three bullet points are covered.
+
+The parts of the program for opening the gate, following the line and going through the intersections were all delivered on time and were working by the end of there respecive testing period. The programing has fallen behind with the intial draft of the pole pushing code not being delivered on time. This was due to the long devalopment time of the intersection code. To speed up devalopment i started using WinSCP as it allows for code to be written on my laptop and then sent to the pi. This speeds up devalopment as adjustments can be be made to the program without leaving the testing table. It also speeds up the time to write and debug the program as i can use visual stduio code which is familar to me. We are still on track to have the code written as we allowed for the final week for final fixes and testing however it is not ideal.
+
