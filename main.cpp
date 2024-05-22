@@ -15,7 +15,7 @@ using namespace::std;
 //--------------------------- Tuneable varables ---------------------------
 
 //-----Colour detection Varables-----
-const int minimumIntensity = 5;
+const int minimumIntensity = 5; // minimum 
 //Black detection
 const float blackTolarance = 10; // The value by which red green and blue can differ and still be black
 const int maxBlackIntensity = 60; // The maximum value of red + green + blue values to still be black
@@ -23,8 +23,7 @@ const int maxBlackIntensity = 60; // The maximum value of red + green + blue val
 const float greenTolaranceOfRed = 1.3;  // The multiple of which green has to greater than red
 const float greenTolaranceOfBlue = 1.6; // The multiple of which green has to greater than blue
 //Blue detection
-const int redLessThan = 70;
-const int greenLessThan = 70;
+const int othersLessThan = 70;
 const int bluegreaterThan = 30;
 //Red detection
 const float redTolarance = 1.5;
@@ -33,17 +32,22 @@ const float redTolarance = 1.5;
 const double kp = 0.047; //the gain of the proption 
 const double kd = 3.3; //tthe gain of the derivative 
 
-
 //-----General Varables-----
+//Section change
+const int sectionChangeThreshold = 2500; // The number of red pixels required for the section to change 
+
+//Follow line 
 int initialCruisingSpeed = 55; //the speed the robot moves at 
 const int initalRowToCheck = 120; //The row that is checked to generate error
-const int sectionChangeThreshold = 2500; // The number of red pixels required for the section to change 
+
+//Intersection
+const int turnThreshold = 250; // number of pixels in each box to detect it 
+
+//Pole pushing
+const int pixelsInColThreshhold = 70; // 70% of 240 then 130 then 70 works good more testing required
+const int colCountThreshhold = 10; // number of cols before it will stop searching for pole
 int poleThreshhold = 190; //Number of columns to be close enough to pole
 
-const int colCountThreshhold = 10;
-const int pixelsInColThreshhold = 70; // 70% of 240 then 130 then 70 works good more testing required
-
-const int turnThreshold = 250;
 
 //--------------------------- Dont Touch varables ---------------------------
 const int leftMotorPort = 5;   //port number for the left motor
@@ -67,37 +71,6 @@ int cruisingSpeed = initialCruisingSpeed;
 
 //------------------------- Static Functions ---------------------------
 
-//Check motor polarity
-void testMotors() {
-    int pwm = 55;
-    cout << "if flipMotors is true" << endl;
-    if (true) {
-        set_motors(leftMotorPort, 65 - (pwm - 31));
-        set_motors(rightMotorPort, pwm);
-    }
-    else {
-        set_motors(leftMotorPort, pwm);
-        set_motors(rightMotorPort, 65 - (pwm - 31));
-    }
-    hardware_exchange();
-    cout << "driving for 5 seconds ..." << endl;
-    sleep1(5000);
-
-    cout << "if flipMotors is false" << endl;
-    if (false) {
-        set_motors(leftMotorPort, 65 - (pwm - 31));
-        set_motors(rightMotorPort, pwm);
-    }
-    else {
-        set_motors(leftMotorPort, pwm);
-        set_motors(rightMotorPort, 65 - (pwm - 31));
-    }
-    cout << "driving for 5 seconds ..." << endl;
-    hardware_exchange();
-    sleep1(5000);
-   
-}
-
 //Checks if a pixel is black, makes black pixels green
 bool isBlack(int x, int y) {
     int red = get_pixel(y, x, 0);
@@ -105,8 +78,8 @@ bool isBlack(int x, int y) {
     int blue = get_pixel(y, x, 2);
     int intensity = get_pixel(y, x, 3);
 
-    //checsk if the red green and blue values are within + or - blackTolarance of each other 
-    //and intesity is less than the maximum intesity
+    //checks if the red green and blue values are within + or - blackTolarance of each other 
+    //and intensity is less than the maximum intensity
     if ((red - blackTolarance < green || red + blackTolarance > green)
         && (red - blackTolarance < blue || red + blackTolarance > blue)
         && (green - blackTolarance < blue || green + blackTolarance > blue)
@@ -122,17 +95,13 @@ bool isBlack(int x, int y) {
 }
 
 
-//checks if a pixel is red, makes red pixels blue
 bool isRed(int x,int y){
-    //cout << "x:" << x << "y:" << y << endl;
 	int red = (int)get_pixel(y,x, 0);
 	int green = (int)get_pixel(y,x, 1);
     int blue = (int)get_pixel(y,x, 2);
+	int intensity = (int)get_pixel(y,x, 3);
 	
-	int intesity = green+blue;
-	
-	
-	if(red > redTolarance*blue && red >redTolarance*green && intesity>minimumIntensity){
+	if(red > redTolarance*blue && red >redTolarance*green && intensity >minimumIntensity){
 		set_pixel(y,x,0,0,255); 
 		return(true);
 	}
@@ -140,30 +109,26 @@ bool isRed(int x,int y){
 }
 
 
-
-//checks if a pixel is red, makes red pixels blue
 bool isGreen(int x,int y){
 	int red = (int)get_pixel(y,x, 0);
 	int green = (int)get_pixel(y,x, 1);
     int blue = (int)get_pixel(y,x, 2);
+    int intensity = (int)get_pixel(y,x, 3);
 		
-	if(green > round(greenTolaranceOfRed*red) && green > round(greenTolaranceOfBlue*blue)){
+	if(green > round(greenTolaranceOfRed*red) && green > round(greenTolaranceOfBlue*blue) && intensity >minimumIntensity){
 		set_pixel(y,x,0,0,255); 
 		return(true);
 	}
 	return false;
 }
 
-//checks if a pixel is red, makes red pixels blue
 bool isBlue(int x,int y){
     int red = (int)get_pixel(y,x, 0);
 	int green = (int)get_pixel(y,x, 1);
     int blue = (int)get_pixel(y,x, 2);
-
     int intensity = (int)get_pixel(y,x, 3);
 
-		
-	if(red < redLessThan && green < greenLessThan && blue > bluegreaterThan && intensity > minimumIntensity){
+    if(red < othersLessThan && green < othersLessThan && blue > bluegreaterThan && intensity >minimumIntensity){
 		set_pixel(y,x,0,0,255); 
 		return(true);
 	}
@@ -362,8 +327,6 @@ void turnRight(){
         sleep1(20);
     }
 }
-
-
 
 //------------------------- Dynamic Functions ---------------------------
 
