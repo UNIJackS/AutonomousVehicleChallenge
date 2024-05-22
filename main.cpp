@@ -447,12 +447,12 @@ void intersections(long long &timeOfLastTurn,int &turnNumber) {
         cruisingSpeed = 49;
     }else{
         cruisingSpeed = 55;
-        if(checkBox(true,300,50,20,110,20) && turnOrder[turnNumber] == 'L'){
+        if(checkBox(true,250,50,20,110,20) && turnOrder[turnNumber] == 'L'){
             turnNumber+=1;
             cout << "left called" << endl;
             turnLeft();
             timeOfLastTurn = currentTime;
-        }else if(checkBox(true,300,250,20,110,20) && turnOrder[turnNumber] == 'R'){
+        }else if(checkBox(true,250,250,20,110,20) && turnOrder[turnNumber] == 'R'){ //Threshhold origonally 300 droping to 250
             turnNumber +=1;
             cout << "left called" << endl;
             turnRight();
