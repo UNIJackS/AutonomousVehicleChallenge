@@ -1,0 +1,10 @@
+kd=0.02 kp = 0.055 | changes too much
+kd = 0.05 kp = 0.055 | improvement but still not consistent
+kd = 0.08 kp = 0.055 | improvement but still not consistent
+kd = 0.08, kp = 0.55 | does not work well at all, turns on the straight line at the beginning
+kd = 0.08, kp = 0.058 | kp = 0.055 works better than kp = 0.058
+kd = 0.08, kp = 0.058, row | 
+kd = 1 | kp = 0.04444444444444 | row = 120 | So far works the best out of all values
+kd=3.3 | kp = 0.047 | row = 120 | Using small wheels and camera is lower, this makes it through the track quite nicely. Camera has to be in certain position (quite high) for it to follow the track properly. 
+kd=3.3 | kp = 0.0475 | row = 120 | After multiple trials, we determined that kp at 0.0475 causes the motor to cease proper function at certain points of the track
+
