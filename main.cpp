@@ -10,7 +10,7 @@
 #include "E101.h" // VUW camera library
 #include <chrono> //used for 
 
-using namespace  std;
+using namespace::std;
 
 //--------------------------- Tuneable varables ---------------------------
 const float blackTolarance = 10; // The value by which red green and blue can differ and still be black
@@ -25,13 +25,14 @@ const float greenTolarance = 1.5;
 
 int cruisingSpeed = 55; //the speed the robot moves at 
 
-const int redThreshold = 2000; // The number of red pixels required for the section to change 
+const int redThreshold = 2500; // The number of red pixels required for the section to change 
 
 //Line following varables
 const double lkp = 0.047; //the gain of the proption 
 const double lki = 0.0; //the gain of the Integral 
 const double lkd = 3.3; //tthe gain of the derivative 
-const int rowToCheck = 120; //The row that is checked to generate error
+const int initalRowToCheck = 120; //The row that is checked to generate error
+int rowToCheck = initalRowToCheck;
 
 //Intersection Varables
 char turnOrder[] = {'R','R','L','L','R','L','R'};
@@ -117,8 +118,8 @@ bool isBlack(int x, int y) {
 bool isRed(int x,int y){
     //cout << "x:" << x << "y:" << y << endl;
 	int red = (int)get_pixel(y,x, 0);
-	int blue = (int)get_pixel(y,x, 1);
-	int green = (int)get_pixel(y,x, 2);
+	int green = (int)get_pixel(y,x, 1);
+    int blue = (int)get_pixel(y,x, 2);
 	
 	int intesity = green+blue;
 	
@@ -132,12 +133,11 @@ bool isRed(int x,int y){
 
 //checks if a pixel is red, makes red pixels blue
 bool isGreen(int x,int y){
-    //cout << "x:" << x << "y:" << y << endl;
 	int red = (int)get_pixel(y,x, 0);
-	int blue = (int)get_pixel(y,x, 1);
-	int green = (int)get_pixel(y,x, 2);
+	int green = (int)get_pixel(y,x, 1);
+    int blue = (int)get_pixel(y,x, 2);
 		
-	if(green > round(1.3*red) && green > 2*blue){
+	if(green > round(1.3*red) && green > 1.6*blue){
 		set_pixel(y,x,0,0,255); 
 		return(true);
 	}
@@ -147,60 +147,20 @@ bool isGreen(int x,int y){
 
 //checks if a pixel is red, makes red pixels blue
 bool isBlue(int x,int y){
-    //cout << "x:" << x << "y:" << y << endl;
-	int red = (int)get_pixel(y,x, 0);
-	int blue = (int)get_pixel(y,x, 1);
-	int green = (int)get_pixel(y,x, 2);
-	
-	int intesity = green+blue;
-	
-	
-    if ((red - blueTolarance < green || red + blueTolarance > green)
-        && (red - blueTolarance < blue || red + blueTolarance > blue)
-        && (green - blueTolarance < blue || green + blueTolarance > blue)
-        && intesity > maxBlueIntensity) {
-        return false;
+    int red = (int)get_pixel(y,x, 0);
+	int green = (int)get_pixel(y,x, 1);
+    int blue = (int)get_pixel(y,x, 2);
 
-    }
-    else {
-        //sets pixels detected as black to green
-        set_pixel(y, x, 0, 255, 0);
-        return true;
-    }
+    int intensity = (int)get_pixel(y,x, 3);
+
+		
+	if(red < 70 && green < 70 && blue > 30 && intensity > 5){
+		set_pixel(y,x,0,0,255); 
+		return(true);
+	}
+	return false;
 }
 
-
-void printScreen(){
-    int pixelsPerChunk = 5;
-    for(int currentXChunk = 0; currentXChunk < totalXPixels/pixelsPerChunk; currentXChunk +=1){
-        for(int currentYChunk = 0; currentYChunk < totalYPixels/pixelsPerChunk; currentYChunk +=1){
-            int blackPixelsInChunk = 0;
-            int nonBlackPixelsInChunk = 0;
-            for(int currentXPixel = currentXChunk*pixelsPerChunk; currentXPixel < pixelsPerChunk + currentXChunk*pixelsPerChunk; currentXPixel +=1){
-                for(int currentYPixel = currentYChunk*pixelsPerChunk; currentYPixel < pixelsPerChunk + currentYChunk*pixelsPerChunk; currentYPixel +=1){
-                    if(isBlack(currentXPixel,currentYPixel)){
-                        blackPixelsInChunk +=1;
-                    }else{
-                        nonBlackPixelsInChunk +=1;
-                    }
-
-                }
-            }
-            if(blackPixelsInChunk >= nonBlackPixelsInChunk){
-                cout << "1";
-            }else{
-                cout << "0";
-            }
-        }
-        cout << endl;
-    }
-     cout << endl<< endl<< endl<< endl<< endl;
-     set_motors(leftMotorPort, 48);
-     set_motors(rightMotorPort, 48);
-     hardware_exchange();
-     int input =0;
-     cin >> input;
-}
 
 //Checks if a row or column contains red or black
 //ToRead = the row or column to check
@@ -232,12 +192,10 @@ int readRow(int rowToRead,bool &present) {
 }
 
 
-int readPoles(bool notSearching, char colour,int &countColumnsAboveThreshold){
-    int threshHold = 130; // 70% of 240
+int readPoles(bool &notSearching, char colour,int &countColumnsAboveThreshold){
+    int threshHold = 70; // 70% of 240, 130 works good more testing required
     countColumnsAboveThreshold = 0;
     int totalValue = 0;
-
-    cout << "colour:" << colour << endl;
 
     for (int currentXPixel = 0; currentXPixel < 320; currentXPixel += 1) {
         int pixelsInColumn = 0;
@@ -272,11 +230,8 @@ int readPoles(bool notSearching, char colour,int &countColumnsAboveThreshold){
         }
         
     }
-    
 
-    //cout << "countColumnsAboveThreshold" << countColumnsAboveThreshold << endl;
-    if(countColumnsAboveThreshold > 0 ){
-        
+    if(countColumnsAboveThreshold > 10 ){
 		return ((totalValue/countColumnsAboveThreshold)- totalXPixels / 2);
 	}else{
 		notSearching = false;
@@ -414,15 +369,36 @@ void turnRight(){
 //------------------------- Dynamic Functions ---------------------------
 
 //Checks if the number of red pixels in the image is above the red threshold
-bool sectionChange(){
-    if(!checkBox(false,redThreshold,0,totalXPixels-1,0,totalYPixels-1)){
-        return 0;
+bool sectionChange(bool &noChangeInProgress, long long &timeSectionChangeDetected){
+    long long currentTime = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
+    
+    bool redDetected =  checkBox(false,redThreshold,0,totalXPixels-1,0,totalYPixels-1);
+    if(redDetected&& noChangeInProgress){
+        cout << "section change started" << endl;
+        noChangeInProgress = false;
+        timeSectionChangeDetected = currentTime;
+    }
+
+    if(!noChangeInProgress){
+        cout << "changing sectons" << endl;
+
+        if(currentTime - timeSectionChangeDetected < 1000){
+            rowToCheck = 5;
+        }
+
+        if(currentTime - timeSectionChangeDetected > 1000 && currentTime - timeSectionChangeDetected < 2000){
+            rowToCheck = initalRowToCheck;
+        }
+
+        if(currentTime - timeSectionChangeDetected > 2000 && !noChangeInProgress){
+            cout << "changing sectons finished after:"<< currentTime - timeSectionChangeDetected << " seconds" << endl;
+            noChangeInProgress = true;
+            return 1;
+        }
+
     }else{
-        cout << "Section change tripped" << endl;
-        driveMotors(55,55,0);
-        hardware_exchange();
-        sleep1(1000);
-        return 1;
+        return 0;
+
     }
 } 
 
@@ -449,6 +425,8 @@ void followLine(long long &prevousTime,double &prevousError) {
     bool blackpresent = true;
     //The distance from the center of the screen to the average black pixel (center is 160)
     double error = (double)(readRow(rowToCheck,blackpresent));
+
+    cout << "rowToCheck" << endl;
 
 	if(blackpresent){
         long long currentTime = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
@@ -484,13 +462,15 @@ void intersections(long long &timeOfLastTurn,int &turnNumber) {
     }
 }
 
-void pushPole(int &poleNumber,long long &prevousTime,double &prevousError) {
+void pushPole(int &poleNumber,long long &prevousTime,double &prevousError,bool &ballLockout) {
     int total = 0;
     bool notSearching = true;
     //Check clumns as well
     double error = (double)(readPoles(notSearching,poleOrder[poleNumber], total));
 
     if(notSearching){ //Drive towards pole
+        cout << "not searching" << endl;
+
         long long currentTime = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
         double output = pkp * error + pkd * ((error - prevousError) / (currentTime - prevousTime));
         //Sets values for next time
@@ -499,19 +479,37 @@ void pushPole(int &poleNumber,long long &prevousTime,double &prevousError) {
         //drives motors towards pole
         driveMotors(55,55,round(output));
         //checks if pole is close enough 
-        cout << "total" << total << endl;
-        if(total > poleThreshhold){
+        if(total > poleThreshhold && poleNumber != sizeof(poleOrder)-1){
             cout << "Pole reched reversing" << endl;
             poleNumber +=1;
-            //reversese for 3 seconds from the pole
+            //reversese for 1 second from the pole
             driveMotors(41,41,0);
+            
             hardware_exchange();
-            sleep1(3000);
+            sleep1(1000);
+        }else if(total > 20 && poleNumber == sizeof(poleOrder)-1){
+            cout << "ball lock out initated" << endl;
+            ballLockout = true;
         }
 
 
+    }else if(ballLockout){
+        cout << "ball no longer detected lockout compleate" << endl;
+        poleNumber +=1;
+
     }else{ //Spin to search for pole
-        driveMotors(48,48,5);
+        cout << "Searching, pole number" << poleNumber << endl;
+
+        if(poleNumber == 0 || poleNumber == 2){
+            cout << "turning right" << endl;
+            driveMotors(48,48,5);
+        }
+
+        if(poleNumber == 1 || poleNumber == 3){
+            cout << "turning left" << endl;
+            driveMotors(48,48,-10);
+        }
+        
     }
 
     
@@ -521,34 +519,13 @@ void pushPole(int &poleNumber,long long &prevousTime,double &prevousError) {
 
 //------- Main ---------
 int main() {
-
+    open_screen_stream();
     int err = init(0);
     cout << "error:" << err << endl;
-    open_screen_stream();
-    //Opens the gate
-    openGate();
 
-
-    
-    while(true){
-        take_picture();
-
-        int red = (int)get_pixel(totalYPixels/2,totalXPixels/2, 0);
-	    int blue = (int)get_pixel(totalYPixels/2,totalXPixels/2, 1);
-	    int green = (int)get_pixel(totalYPixels/2,totalXPixels/2, 2);
-
-        if(green > round(1.3*red) ){
-            
-        }
-
-        if(green > 2*blue){
-	    }
-
-        cout << red << "," << blue << "," << green << endl;
-
-        update_screen();
-        sleep1(20);
-    }
+    //Varable for section change
+    bool noChangeInProgress = true;
+    long long timeSectionChangeDetected = 0;
 
 
     //Varables for following line
@@ -563,33 +540,46 @@ int main() {
     int poleNumber = 0;
     long long polePrevousTime = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
     double polePrevousError = 0;
+    bool ballLockout = false;
 
     //follows the line
-    int sectionNumber = 3;
-    while(true){
+    int sectionNumber = 1;  //Should be 1 to start
+    bool running = true;
+    while(running){
 		take_picture();
-
         switch (sectionNumber)
         {
         case 1:
-            set_motors(cameraMotorPort, 55); //lowers camera to look at line
+            openGate(); // Opens the gate 
+            sectionNumber +=1;
+            break;
+
+        case 2:
+            set_motors(cameraMotorPort, 65); //lowers camera to look at line
+            
+            sectionNumber += sectionChange(noChangeInProgress,timeSectionChangeDetected); //Adds one to go to the next switch case if true
             followLine(prevousTime, prevousError);
-            sectionNumber += sectionChange(); //Adds one to go to the next switch case if true
             break;
         
-        case 2:
-            set_motors(cameraMotorPort, 55); //lowers camera to look at line
-            followLine(prevousTime, prevousError);
-		    intersections(timeOfLastTurn,turnNumber);
-            sectionNumber += sectionChange(); //Adds one to go to the next switch case if true
-            break;
-
         case 3:
-            set_motors(cameraMotorPort, 35); //raises camera to look for poles
-            cout << "poleNumber" << poleNumber << endl;
-            pushPole(poleNumber,polePrevousTime, polePrevousError);
+            set_motors(cameraMotorPort, 65); //lowers camera to look at line
+		    intersections(timeOfLastTurn,turnNumber);
+            sectionNumber += sectionChange(noChangeInProgress,timeSectionChangeDetected); //Adds one to go to the next switch case if true
+            followLine(prevousTime, prevousError);
             break;
 
+        case 4:
+            set_motors(cameraMotorPort, 35); //raises camera to look for poles
+            pushPole(poleNumber,polePrevousTime, polePrevousError,ballLockout);
+
+            if(poleNumber > sizeof(poleOrder)-1){ //Checks if the poles have been passed
+                sectionNumber +=1;
+            }
+            break;
+
+        case 5: //Stops robot moving
+            driveMotors(48,48,0);
+            break;
         }
 
         hardware_exchange();
