@@ -1,10 +1,5 @@
-List of team members and their contact info (do not use private emails)
-What are assigned roles: architect, tester, coordinator, etc with brief roles description.
-General design of the software. How it is divided into pieces.
-Road map (as a table). Each row of the table is
-
-
 Team 15 
+=======
 
 - Abid Hossain ( hossaiabid ) hossaiabid@ecs.vuw.ac.nz          -Tester
     -Tests the code for the robot and provides help to other roles while no testing is needed
@@ -20,12 +15,16 @@ Team 15
 
 
 
---------------- Program design ---------------
+Program Design
+-----------
+
 The Program will consist of 5 main functions one for each of the 4 major sections of the course and 1 for detecting if
 the section has changed. These 4 main functions will be supported by some static functions which will do basic things
 like reading a row or column and returning the average black pixel or checking if a pixel is black.
 
 4 main functions 
+-----------
+
 - Open gate (section 1)
     -This will communicate with the server and open the gate for the robot
 
@@ -48,6 +47,8 @@ like reading a row or column and returning the average black pixel or checking i
      It will do this by checking if the number of red pixels in the screen is above a threshold value.
 
 Static functions
+-----------
+
 - read 
     -This will take a row or column number, a reference to a bool for if at least 1 black pixel is detected and a bool
      for if a column or row is to be read. 
@@ -73,7 +74,8 @@ to change between the 4 main functions. Except for the open gate function as the
 
 
 
-
+Progress Tabel
+-----------
 
 | Start date | Task description | Responsible team member | End date | Outcome |
 | ------ | ------ | ------ | ------ | ------ |
